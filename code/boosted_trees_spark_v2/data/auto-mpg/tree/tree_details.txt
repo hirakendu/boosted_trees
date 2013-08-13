@@ -1,0 +1,26 @@
+i = 1, y = 20.778, n = 299, x = cylinders, t = 5.500
+  i = 2, y = 26.558, n = 128, x = weight, t = 2087.500
+    i = 4, y = 31.467, n = 39, x = year, t = 77.500
+      i = 8, y = 30.217, n = 30, x = make$, t = {chevrolet,
+        fiat,
+        ford,
+        peugeot,
+        plymouth,
+        subaru,
+        volkswagen,
+        vw} : {datsun,
+        dodge,
+        honda,
+        renault,
+        toyota}
+        i = 16, y = 28.353, n = 17
+        i = 17, y = 32.654, n = 13
+      i = 9, y = 35.633, n = 9
+    i = 5, y = 24.407, n = 89, x = weight, t = 2305.000
+      i = 10, y = 26.182, n = 39
+      i = 11, y = 23.022, n = 50
+  i = 3, y = 16.451, n = 171, x = horsepower, t = 127.000
+    i = 6, y = 18.961, n = 74
+    i = 7, y = 14.536, n = 97, x = year, t = 76.500
+      i = 14, y = 13.822, n = 76
+      i = 15, y = 17.119, n = 21

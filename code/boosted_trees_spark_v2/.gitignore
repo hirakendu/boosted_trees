@@ -1,0 +1,8 @@
+target/
+boosted_trees_work*
+spark_log.txt
+.cache
+.classpath
+.settings/
+.project
+dotgitignore

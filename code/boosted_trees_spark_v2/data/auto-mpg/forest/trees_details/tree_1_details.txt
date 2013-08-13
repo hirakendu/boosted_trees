@@ -1,0 +1,82 @@
+i = 1, y = 3.324, n = 299, x = weight, t = 2922.000
+  i = 2, y = 4.348, n = 134, x = year, t = 73.500
+    i = 4, y = 3.409, n = 54, x = make$, t = {amc,
+      audi,
+      chevrolet,
+      ford,
+      maxda,
+      mazda,
+      mercury,
+      toyota,
+      volkswagen,
+      volvo} : {bmw,
+      datsun,
+      dodge,
+      fiat,
+      opel,
+      peugeot,
+      plymouth,
+      renault,
+      saab,
+      toyouta}
+      i = 8, y = 2.497, n = 32, x = make$, t = {maxda,
+        mazda,
+        volvo} : {amc,
+        audi,
+        chevrolet,
+        ford,
+        mercury,
+        toyota,
+        volkswagen}
+        i = 16, y = -0.475, n = 3
+        i = 17, y = 2.804, n = 29
+      i = 9, y = 4.737, n = 22
+    i = 5, y = 4.981, n = 80, x = make$, t = {audi,
+      bmw,
+      maxda,
+      mazda,
+      oldsmobile,
+      opel,
+      plymouth,
+      pontiac,
+      saab,
+      vw} : {amc,
+      buick,
+      capri,
+      chevrolet,
+      datsun,
+      dodge,
+      fiat,
+      ford,
+      honda,
+      renault,
+      subaru,
+      toyota,
+      volkswagen}
+      i = 10, y = 3.757, n = 18
+      i = 11, y = 5.336, n = 62, x = year, t = 76.500
+        i = 22, y = 4.777, n = 34
+        i = 23, y = 6.015, n = 28
+  i = 3, y = 2.494, n = 165, x = year, t = 77.500
+    i = 6, y = 2.221, n = 133, x = make$, t = {chevroelt,
+      chevy,
+      chrysler,
+      hi,
+      mercedes-benz,
+      mercury,
+      oldsmobile,
+      volvo} : {amc,
+      buick,
+      cadillac,
+      chevrolet,
+      dodge,
+      ford,
+      peugeot,
+      plymouth,
+      pontiac,
+      toyota}
+      i = 12, y = 0.720, n = 19
+      i = 13, y = 2.472, n = 114, x = weight, t = 3711.500
+        i = 26, y = 2.930, n = 50
+        i = 27, y = 2.113, n = 64
+    i = 7, y = 3.625, n = 32

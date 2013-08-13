@@ -1,0 +1,69 @@
+i = 1, y = 0.133, n = 299, x = make$, t = {bmw,
+  chevy,
+  ford,
+  hi,
+  maxda,
+  mazda,
+  toyota,
+  toyouta,
+  volkswagen,
+  volvo} : {amc,
+  audi,
+  buick,
+  cadillac,
+  capri,
+  chevroelt,
+  chevrolet,
+  chrysler,
+  datsun,
+  dodge,
+  fiat,
+  honda,
+  mercedes,
+  mercedes-benz,
+  mercury,
+  oldsmobile,
+  opel,
+  peugeot,
+  plymouth,
+  pontiac,
+  renault,
+  saab,
+  subaru,
+  vw}
+  i = 2, y = -0.148, n = 87, x = displacement, t = 89.500
+    i = 4, y = -0.899, n = 10, x = origin, t = 2.500
+      i = 8, y = -2.453, n = 2
+      i = 9, y = -0.511, n = 8
+    i = 5, y = -0.050, n = 77, x = weight, t = 2206.500
+      i = 10, y = 0.704, n = 13, x = weight, t = 2073.000
+        i = 20, y = 0.214, n = 9
+        i = 21, y = 1.808, n = 4
+      i = 11, y = -0.203, n = 64, x = weight, t = 2341.000
+        i = 22, y = -1.152, n = 9
+        i = 23, y = -0.048, n = 55
+  i = 3, y = 0.248, n = 212, x = horsepower, t = 95.500
+    i = 6, y = 0.520, n = 83, x = acceleration, t = 20.300
+      i = 12, y = 0.594, n = 78, x = acceleration, t = 14.100
+        i = 24, y = -0.522, n = 5
+        i = 25, y = 0.670, n = 73
+      i = 13, y = -0.633, n = 5
+    i = 7, y = 0.073, n = 129, x = acceleration, t = 15.450
+      i = 14, y = 0.261, n = 91, x = weight, t = 3587.500
+        i = 28, y = 0.754, n = 26
+        i = 29, y = 0.064, n = 65
+      i = 15, y = -0.375, n = 38, x = make$, t = {amc,
+        audi,
+        chevrolet,
+        peugeot,
+        plymouth,
+        pontiac,
+        saab} : {buick,
+        cadillac,
+        chevroelt,
+        datsun,
+        dodge,
+        mercedes-benz,
+        oldsmobile}
+        i = 30, y = -0.800, n = 26
+        i = 31, y = 0.545, n = 12
