@@ -151,8 +151,8 @@ object SparkIndexing {
 		val indexes : Array[Map[String, Int]] = new Array(features.length)
 		for (j <- 1 to features.length - 1) {
 			if (features(j).endsWith("$")) {
-				indexes(j) = sc.textFile(indexesDir + "/" +
-								features(j).replace("$", "") + "_index.txt").collect.
+				indexes(j) = SparkUtils.readSmallFile(sc, indexesDir + "/" +
+								features(j).replace("$", "") + "_index.txt").
 								map(kv => {
 									val kvArray : Array[String] = kv.split("\t")
 									(kvArray(0), kvArray(1).toInt)

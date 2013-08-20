@@ -93,6 +93,7 @@ object Utils {
 		str
 	}
 	
+	
 	// 3. Function for creating base directory for a path.
 	
 	def createParentDirs(pathName : String) : Unit = {
@@ -101,5 +102,6 @@ object Utils {
 		val dirName : String = pathNameNoSlash.replaceAll(parts(parts.length - 1) + "$", "")
 		(new File(dirName)).mkdirs
 	}
+
 	
 }

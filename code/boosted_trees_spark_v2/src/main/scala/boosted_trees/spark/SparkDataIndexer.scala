@@ -82,8 +82,9 @@ object SparkDataIndexer {
 		println("\n  Reading and indexing data.\n")
 		
 		// 1.1. Read header.
-		val features : Array[String] = sc.textFile(headerFile).collect
-											// .first.split("\t")
+		
+		val features : Array[String] = SparkUtils.readSmallFile(sc, headerFile)
+										// .first.split("\t")
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
 		

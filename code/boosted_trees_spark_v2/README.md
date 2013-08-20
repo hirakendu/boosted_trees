@@ -356,6 +356,7 @@ are provided below.
         --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
         --max-depth^5^\
         --min-gain-fraction^0.01^\
+        --min-distributed-samples^10000^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
         --cache-indexed-data^0
@@ -402,6 +403,8 @@ are provided below.
         --shrinkage^0.8^\
         --max-depth^4^\
         --min-gain-fraction^0.01^\
+        --min-distributed-samples^10000^\
+        --initial-num-trees^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
         --cache-indexed-data^0
@@ -418,7 +421,7 @@ are provided below.
           --queue default \
           --args \
         --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt \
+        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
         --data-file^hdfs:///tmp/boosted_trees_work/split/test_data.txt^\
         --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_test_data.txt^\

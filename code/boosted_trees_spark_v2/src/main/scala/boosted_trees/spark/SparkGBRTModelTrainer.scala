@@ -25,6 +25,8 @@ object SparkGBRTModelTrainer {
 		var shrinkage : Double = 0.8
 		var maxDepth : Int = 4
 		var minGainFraction : Double = 0.01
+		var minDistributedSamples : Int = 10000
+		var initialNumTrees : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		var cacheIndexedData : Int = 0
@@ -82,6 +84,12 @@ object SparkGBRTModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--min-distributed-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				minDistributedSamples = xargs(argi).toInt
+			} else if (("--initial-num-trees".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				initialNumTrees = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -113,8 +121,8 @@ object SparkGBRTModelTrainer {
 		println("\n  Reading and indexing data.\n")
 		
 		// 1.1. Read header.
-		val features : Array[String] = sc.textFile(headerFile).collect
-											// .first.split("\t")
+		val features : Array[String] = SparkUtils.readSmallFile(sc, headerFile)
+										// .first.split("\t")
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
 		
@@ -138,8 +146,14 @@ object SparkGBRTModelTrainer {
 			samples = SparkIndexing.readIndexedData(sc, indexedDataFile)
 		}
 		
+		// 2. Read initial forest model.
 		
-		// 2. Train forest model.
+		var initialRootNodes : Array[Node] = Array() 
+		if (initialNumTrees > 0) {
+			initialRootNodes = SparkGBRT.readForest(sc, modelDir + "/nodes/")
+		}
+		
+		// 3. Train forest model.
 		
 		println("\n  Training forest model.\n")
 		
@@ -150,15 +164,16 @@ object SparkGBRTModelTrainer {
 		}
 		
 		val rootNodes : Array[Node] = SparkGBRT.trainForest(samples, featureTypes,
-				numTrees, shrinkage, maxDepth, minGainFraction)
+				numTrees, shrinkage, maxDepth, minGainFraction,
+				minDistributedSamples, initialRootNodes)
 		
 		
-		// 3. Print and save the tree.
+		// 4. Print and save the tree.
 		
 		println("\n  Saving the forest.\n")
 		
-		SparkGBRT.saveForest(sc, modelDir + "/nodes/", rootNodes)
-		SparkGBRT.printForest(sc, modelDir + "/trees/", rootNodes)
+		SparkGBRT.saveForest(sc, modelDir + "/nodes/", rootNodes, initialNumTrees)
+		SparkGBRT.printForest(sc, modelDir + "/trees/", rootNodes, initialNumTrees)
 		
 	}
 

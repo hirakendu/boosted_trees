@@ -23,6 +23,7 @@ object SparkRegressionTreeModelTrainer {
 		var modelDir : String = SparkDefaultParameters.treeModelDir
 		var maxDepth : Int = 5
 		var minGainFraction : Double = 0.01
+		var minDistributedSamples : Int = 10000
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		var cacheIndexedData : Int = 0
@@ -74,6 +75,9 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--min-distributed-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				minDistributedSamples = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -105,8 +109,8 @@ object SparkRegressionTreeModelTrainer {
 		println("\n  Reading and indexing data.\n")
 		
 		// 1.1. Read header.
-		val features : Array[String] = sc.textFile(headerFile).collect
-											// .first.split("\t")
+		val features : Array[String] = SparkUtils.readSmallFile(sc, headerFile)
+										// .first.split("\t")
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
 		
@@ -142,7 +146,7 @@ object SparkRegressionTreeModelTrainer {
 		}
 		
 		val rootNode : Node = SparkRegressionTree.trainTree(samples, featureTypes,
-				maxDepth, minGainFraction)
+				maxDepth, minGainFraction, minDistributedSamples)
 		
 		
 		// 3. Print and save the tree.
