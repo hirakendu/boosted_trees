@@ -260,8 +260,8 @@ or as caret separated:
     SPARK_CLASSPATH=$(pwd)/target/boosted_trees_spark-spark.jar \
     spark_local_run.sh boosted_trees.spark.SparkDataSampler \
     --spark-master^local[4]^\
-    --data-file^hdfs:///tmp/boosted_trees_work/data.txt^\
-    --sample-data-file^hdfs:///tmp/boosted_trees_work/sample_data.txt^\
+    --data-file^file:///tmp/boosted_trees_work/data.txt^\
+    --sample-data-file^file:///tmp/boosted_trees_work/sample_data.txt^\
     --sample-rate^0.01 \
       2>spark_log.txt
 
@@ -398,6 +398,7 @@ are provided below.
         --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
         --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\
+        --residual-data-file^hdfs:///tmp/boosted_trees_work/indexing/residual_data.txt^\
         --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
         --num-trees^5^\
         --shrinkage^0.8^\
@@ -405,6 +406,7 @@ are provided below.
         --min-gain-fraction^0.01^\
         --min-distributed-samples^10000^\
         --initial-num-trees^0^\
+        --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
         --cache-indexed-data^0

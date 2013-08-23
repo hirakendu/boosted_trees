@@ -141,8 +141,9 @@ object SparkRegressionTreeModelTrainer {
 		
 		if (cacheIndexedData == 1) {
 			// samples.persist(StorageLevel.MEMORY_AND_DISK)
-			// samples.persist
-			samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+			// samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+			samples.persist
+			samples.map(_(0)).reduce(_ + _)  // Load now.
 		}
 		
 		val rootNode : Node = SparkRegressionTree.trainTree(samples, featureTypes,

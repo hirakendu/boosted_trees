@@ -40,28 +40,27 @@ object SparkGBRT {
 			numTrees : Int = 5, shrinkage : Double = 0.8,
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minDistributedSamples : Int = 10000,
-			initialRootNodes : Array[Node] = Array()) : Array[Node] = {
+			initialNumTrees : Int = 0) : Array[Node] = {
 //		val residualSamples : RDD[Array[Double]] = samples.map(_.clone)
 //				// New. Create a copy of samples which will be modified over iterations.
 //				// Doesn't work as RDD cannot be updated/mutated, with or without caching.
-		val rootNodes : Array[Node] = new Array(initialRootNodes.length + numTrees)
-		for (m <- 0 to initialRootNodes.length - 1) {
-			rootNodes(m) = initialRootNodes(m) 
-		}
-		for (m <- initialRootNodes.length to (initialRootNodes.length + numTrees - 1)) {
-			println("    Training Tree # " + m + ".")
+		val rootNodes : Array[Node] = new Array(numTrees)
+		for (m <- 0 to numTrees - 1) {
+			println("    Training Tree # " + (m + initialNumTrees) + ".")
+			val initialTime : Long = System.currentTimeMillis
+			
 			// Old.
 			// TODO: Speed up by adding a initialResponse function argument
 			// to trainNode and splitNode in SparkRegressionTree so that
 			// all features need not be cloned.
-			val residualSamples : RDD[Array[Double]] = samples.map(sample => {
-				val residual : Double = sample(0) - 
-						GBRT.predict(sample, rootNodes.dropRight(initialRootNodes.length + numTrees - m))
-				val residualSample : Array[Double] = sample.clone
-					// Without clone, original sample is modified, which fails with cached samples.
-				residualSample(0) = residual
-				residualSample
-			})
+			val residualSamples = samples.map(sample => {
+					val residual : Double = sample(0) - 
+							GBRT.predict(sample, rootNodes.dropRight(numTrees - m))
+					val residualSample : Array[Double] = sample.clone
+						// Without clone, original sample is modified, which fails with cached samples.
+					residualSample(0) = residual
+					residualSample
+				})
 //			// New. Doesn't work as RDD cannot be updated/mutated, with or without caching.
 //			if (m > 0) {
 //				residualSamples.map(sample => {
@@ -69,10 +68,14 @@ object SparkGBRT {
 //							RegressionTree.predict(sample, rootNodes(m-1))
 //				})
 //			}
+			
 			val rootNode = SparkRegressionTree.trainTree(residualSamples, featureTypes,
 					maxDepth, minGainFraction, minDistributedSamples)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
+			
+			val finalTime : Long = System.currentTimeMillis
+			println("    Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
 		}
 		rootNodes
 	}
@@ -84,18 +87,21 @@ object SparkGBRT {
 	
 	def saveForest(sc : SparkContext, nodesDir : String, rootNodes : Array[Node],
 			initialNumTrees : Int = 0) : Unit = {
-		for (m <- initialNumTrees to rootNodes.length - 1) {
-			SparkRegressionTree.saveTree(sc, nodesDir + "/nodes_" + m + ".txt", rootNodes(m))
+		for (m <- 0 to rootNodes.length - 1) {
+			SparkRegressionTree.saveTree(sc, nodesDir + "/nodes_" + (m + initialNumTrees) +
+					".txt", rootNodes(m))
 		}
-		sc.parallelize(List(rootNodes.length), 1).saveAsTextFile(nodesDir + "/num_trees.txt")
+		sc.parallelize(List(rootNodes.length + initialNumTrees), 1).
+			saveAsTextFile(nodesDir + "/num_trees.txt")
 	}
 	
 	// 2.2. Function to print a forest model for easy reading.// Function to print forest model for easy reading.
 	
 	def printForest(sc : SparkContext, treesDir : String, rootNodes : Array[Node],
 			initialNumTrees : Int = 0) : Unit = {
-		for (m <- initialNumTrees to rootNodes.length - 1) {
-			SparkRegressionTree.printTree(sc, treesDir + "/tree_" + m + ".txt", rootNodes(m))
+		for (m <- 0 to rootNodes.length - 1) {
+			SparkRegressionTree.printTree(sc, treesDir + "/tree_" + (m + initialNumTrees) +
+					".txt", rootNodes(m))
 		}
 	}
 	

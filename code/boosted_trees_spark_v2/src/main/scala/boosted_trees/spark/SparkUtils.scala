@@ -42,7 +42,7 @@ object SparkUtils {
 	
 	def readSmallFile(sc : SparkContext, file : String) : Array[String] = {
 		var lines : Array[String] = null
-		if (!sc.master.startsWith("yarn-standalone")) {
+		if (!sc.master.startsWith("yarn-standalone-")) {
 			lines = sc.textFile(file, 1).collect
 		} else {
 			lines = readSmallFile(file : String)

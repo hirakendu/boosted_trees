@@ -56,6 +56,9 @@ object SparkRegressionTree {
 		val maxNumQuantileSamples : Int = 10000
 		
 		// 1. Some node statistics, prior to training.
+		println("        Calculating initial node statistics.")
+		var initialTime : Long = System.currentTimeMillis
+		
 		val stats : (Long, Double, Double) = samples.
 				map(sample => (1L, sample(0), sample(0) * sample(0))).
 				reduce((stats1, stats2) => (stats1._1 + stats2._1,
@@ -63,6 +66,9 @@ object SparkRegressionTree {
 		node.numSamples = stats._1
 		node.response = stats._2 / stats._1
 		node.error = stats._3 - stats._2 * stats._2 / stats._1
+		
+		var finalTime : Long = System.currentTimeMillis
+		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
 				
 		// 2. Don't split if not enough samples or depth too high
 		//    or no variable to split.
@@ -84,6 +90,8 @@ object SparkRegressionTree {
 		val rightValuesForFeatures : Array[Set[Int]]  = new Array(numFeatures)
 		
 		// 3.1. Find the candidate thresholds for continuous features.
+		println("        Calculating quantiles/candidate thresholds for each continuous feature.")
+		initialTime = System.currentTimeMillis
 		val candidateThresholdsForFeatures : Array[Array[Double]] = new Array(numFeatures)
 		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
 		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
@@ -106,6 +114,11 @@ object SparkRegressionTree {
 			}
 		}
 		// })  // End of j-loop for finding candidate thresholds for continuous features.
+		finalTime = System.currentTimeMillis
+		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
+		
+		println("        Calculating histograms for each feature.")
+		initialTime = System.currentTimeMillis
 		
 		// 3.2. Find the stats (histogram, mean response, mean square response) 
 		//      for various feauture-value bins. Most data intensive.
@@ -242,7 +255,7 @@ object SparkRegressionTree {
 //		val emptyStatsMap : MuMap[(Int, Int), (Long, Double, Double)] = MuMap()
 //		val statsForFeatureBins : List[((Int, Int), (Long, Double, Double))] =
 //			samples.aggregate(emptyStatsMap)(statsAggregator, statsReducer).toList
-			
+		
 		// 3.3. Separate the histograms, means, and calculate errors.
 		//      Sort bins of discrete features by mean responses.
 		//		Note that we can read in parallel from
@@ -268,6 +281,13 @@ object SparkRegressionTree {
 			}
 		// }
 		})
+		
+		// Done calculating histograms.
+		finalTime = System.currentTimeMillis
+		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
+		
+		println("        Finding best split and error.")
+		initialTime = System.currentTimeMillis
 		
 		// 3.4. Calculate the best split and error for each feature.
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
@@ -357,6 +377,10 @@ object SparkRegressionTree {
 		node.splitError = minError
 		node.gain = node.error - node.splitError
 		
+		// Done finding best split and error.
+		finalTime = System.currentTimeMillis
+		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
+		
 		// 3.6. Don't split if no gain.
 		if (node.gain < minGain) {
 			return (null, null)
@@ -407,6 +431,7 @@ object SparkRegressionTree {
 		var nodesStack : Stack[(Node,  RDD[Array[Double]])] = Stack()
 		nodesStack.push((rootNode, samples))
 		while (!nodesStack.isEmpty) {
+			val initialTime : Long = System.currentTimeMillis
 			var (node, nodeSamples) : (Node,  RDD[Array[Double]]) = nodesStack.pop
 			if (nodeSamples.count >= minDistributedSamples) {
 				println("      Training Node # " + node.id + ".")
@@ -430,6 +455,8 @@ object SparkRegressionTree {
 					nodesStack.push((node.leftChild.get, leftSamples))
 				}
 			}
+			val finalTime : Long = System.currentTimeMillis
+			println("      Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
 		}
 		rootNode
 	}

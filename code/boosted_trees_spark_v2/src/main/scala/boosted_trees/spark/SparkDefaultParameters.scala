@@ -30,6 +30,6 @@ object SparkDefaultParameters {
 	
 	// SparkGBRTModelTrainer.
 	val forestModelDir : String = workDir + "/forest/"
-	
+	val residualDataFile : String = workDir + "/indexing/residual_data.txt"
 
 }
