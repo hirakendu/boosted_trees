@@ -1,6 +1,7 @@
 package boosted_trees
 
 import java.io.File
+import java.io.PrintWriter
 
 import scala.io.Source
 
@@ -62,6 +63,15 @@ object GBRTDetailsPrinter {
 		// 2. Print forest details.
 		
 		GBRT.printForest(modelDir + "/trees_details/", rootNodes, features, indexes)
+		
+		val featureImportances : List[String] = features.
+			zip(GBRT.evaluateFeatureImportances(rootNodes, numFeatures)).
+			drop(1).  // Drop the label feature
+			toList.sort(_._2 > _._2).
+			map(featureImportance => featureImportance._1 + "\t" + "%.1f".format(featureImportance._2))
+		val printWriter : PrintWriter = new PrintWriter(new File(modelDir + "/feature_importances.txt"))
+		printWriter.println(featureImportances.mkString("\n"))
+		printWriter.close
 		
 	}
 

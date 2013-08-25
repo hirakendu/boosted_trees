@@ -210,7 +210,7 @@ object SparkRegressionTree {
 //					sample : Array[Double]) : MuMap[(Int, Int), (Long, Double, Double)] = {
 //			val square : Double = sample(0) * sample(0)
 //			// ParSeq(Range(1, numFeatures) :_*).foreach(j => {
-//			for (j <- 1 to numFeatures - 1) {	
+//			for (j <- 1 to numFeatures - 1) {
 //				var bj : Int = 0  // Bin index of the value.
 //				if (featureTypes(j) == 0) {
 //					// Continuous feature.
@@ -382,7 +382,7 @@ object SparkRegressionTree {
 		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
 		
 		// 3.6. Don't split if no gain.
-		if (node.gain < minGain) {
+		if (node.gain <= minGain) {
 			return (null, null)
 		}
 		
@@ -399,8 +399,8 @@ object SparkRegressionTree {
 		var leftSamples : RDD[Array[Double]] = null
 		var rightSamples : RDD[Array[Double]] = null
 		if (featureTypes(jMin) == 0) {
-			leftSamples = samples.filter(sample => sample(jMin) <= node.threshold)
-			rightSamples = samples.filter(sample => sample(jMin) > node.threshold)
+			leftSamples = samples.filter(sample => sample(jMin) < node.threshold)
+			rightSamples = samples.filter(sample => sample(jMin) >= node.threshold)
 		} else if (featureTypes(jMin) == 1) {
 			leftSamples = samples.
 					filter(sample => node.leftValues.contains(sample(jMin).toInt))

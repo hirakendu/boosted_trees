@@ -19,6 +19,8 @@ object RegressionTreeErrorAnalyzer {
 		var indexedDataFile : String = DefaultParameters.indexedTestDataFile
 		var modelDir : String = DefaultParameters.treeModelDir
 		var errorFile : String = modelDir + "/error.txt"
+		var binaryMode : Int = 0
+		var threshold : Double = 0.5
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		
@@ -48,6 +50,12 @@ object RegressionTreeErrorAnalyzer {
 			} else if (("--error-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				errorFile = xargs(argi)
+			} else if (("--binary-mode".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				binaryMode = xargs(argi).toInt
+			} else if (("--threshold".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				threshold = xargs(argi).toDouble
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -116,12 +124,40 @@ object RegressionTreeErrorAnalyzer {
 						math.abs(trivialResponse - testSample(0)))
 				}).reduce((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3))
-						
+		
+		var binaryErrorStats : (Long, Long, Long, Long) = null
+		if (binaryMode == 1) {
+			binaryErrorStats = testSamples.map(testSample => {
+					val predicted : Int = RegressionTree.binaryPredict(testSample, rootNode, threshold)
+					val stats : (Long, Long, Long, Long) = testSample(0).toInt match {
+						case 0 => (1L, predicted, 0L, 0)
+						case 1 => (0L, 0, 1L, 1 - predicted)
+					}
+					stats
+				}).reduce((stats1, stats2) => (stats1._1 + stats2._1,
+						stats1._2 + stats2._2, stats1._3 + stats2._3,
+						stats1._4 + stats2._4))
+		}
+		
 		// 3. Save error statistics.
 		
 		println("\n  Saving error statistics.\n")
 		
 		val lines : MutableList[String] = MutableList() 
+		if (binaryMode == 1) {
+			val fp : Long =  binaryErrorStats._2
+			val fn : Long =  binaryErrorStats._4
+			val tp : Long =  binaryErrorStats._3 - fn
+			val tn : Long =  binaryErrorStats._1 - fp
+			lines += "TPR = Recall = " + tp + "/" + (tp + fn) + " = " +
+					"%.3f".format(tp.toDouble / (tp + fn))
+			lines += "FPR = " + fp + "/" + (tn + fp) + " = " +
+					"%.3f".format(fp.toDouble / (tn + fp))
+			lines += "Precision = " + tp + "/" + (tp + fp) + " = " +
+					"%.3f".format(tp.toDouble / (tp + fp))
+			lines += "F1 = " +  "%.3f".format(2 * tp.toDouble / (2 * tp + fn + fp))
+			lines += "A = " + "%.3f".format((tn + tp).toDouble / (tn + tp + fn + fp))
+		}
 		lines += "RMSE = " + "%.3f".format(math.sqrt(errorStats._2 / errorStats._1))
 		lines += "MAE = " + "%.3f".format(errorStats._3 / errorStats._1)
 		lines += "Trivial response = " + "%.3f".format(trivialResponse)

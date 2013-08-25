@@ -85,8 +85,9 @@ object GBRT {
 	}
 	
 	
-	// 2. Function for predicting output for a test sample using a forest model.
+	// 2. Functions for predicting output for a test sample using a forest model.
 	
+	// 2.1. Standard regression forest prediction.
 	def predict(testSample : Array[Double], rootNodes : Array[Node]) : Double = {
 		var output : Double = 0.0
 		for (m <- 0 to rootNodes.length - 1) {
@@ -95,10 +96,42 @@ object GBRT {
 		output
 	}
 	
+	// 2.2. Interpret the regression forest prediction as a score and classify
+	//      as 0 or 1 based on a threshold.
+	//      If original labels were 0-1, regression tree prediction can be
+	//      interpreted as probability of 1 (Bernoulli parameter)
+	//      and binary prediction can be used for classification.
+	def binaryPredict(testSample : Array[Double], rootNodes : Array[Node],
+			threshold : Double = 0.5) : Int  = {
+		val p : Double = predict(testSample, rootNodes) 
+		var b : Int = 0
+		if (p > threshold) {
+			b = 1
+		}
+		return b
+	}
 	
-	// 3. Functions for saving and printing a forest model.
+	// 3. Function for finding feature importances.
 	
-	// 3.1. Function to save a forest model in text format for later use.
+	def evaluateFeatureImportances(rootNodes : Array[Node], numFeatures : Int) : Array[Double] = {
+		val featureImportances : Array[Double] = new Array(numFeatures + 1)
+		for (m <- 0 to rootNodes.length - 1) {
+			val treeFeatureImportances : Array[Double] =
+				RegressionTree.evaluateFeatureImportances(rootNodes(m), numFeatures)
+			for (j <- 1 to numFeatures) {
+				featureImportances(j) += treeFeatureImportances(j)
+			}
+		}
+		for (j <- 1 to numFeatures) {
+			featureImportances(j) /= rootNodes.length
+		}
+		featureImportances
+	}
+	
+	
+	// 4. Functions for saving and printing a forest model.
+	
+	// 4.1. Function to save a forest model in text format for later use.
 	
 	def saveForest(nodesDir : String, rootNodes : Array[Node]) : Unit = {
 		(new File(nodesDir)).mkdirs
@@ -110,7 +143,7 @@ object GBRT {
 		printWriter.close
 	}
 	
-	// 3.2. Functions to print a forest model for easy reading.
+	// 4.2. Functions to print a forest model for easy reading.
 	
 	def printForest(treesDir : String, rootNodes : Array[Node]) : Unit = {
 		(new File(treesDir)).mkdirs
@@ -127,7 +160,7 @@ object GBRT {
 		}
 	}
 	
-	// 3.3. Function to print Grahpviz DOT files.
+	// 4.3. Function to print Grahpviz DOT files.
 	
 	def printForestDot(treesDir : String, rootNodes : Array[Node], features : Array[String]) : Unit = {
 		(new File(treesDir)).mkdirs
@@ -137,7 +170,7 @@ object GBRT {
 	}
 	
 	
-	// 4. Function for reading a forest model.
+	// 5. Function for reading a forest model.
 	
 	def readForest(nodesDir : String) : Array[Node] = {
 		val numTreesText : Array[String] = Source.fromFile(

@@ -148,6 +148,8 @@ options are provided below with brief explanations.
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
           --model-dir /tmp/boosted_trees_work/tree/ \
           --error-file /tmp/boosted_trees_work/tree/error.txt \
+          --binary-mode^0^\
+          --threshold^0.5^\
           --use-indexed-data 0 \
           --save-indexed-data 0
       
@@ -204,6 +206,8 @@ options are provided below with brief explanations.
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
           --model-dir /tmp/boosted_trees_work/forest/ \
           --error-file /tmp/boosted_trees_work/forest/error.txt \
+          --binary-mode^0^\
+          --threshold^0.5^\
           --use-indexed-data 0 \
           --save-indexed-data 0
       
@@ -379,6 +383,8 @@ are provided below.
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_test_data.txt^\
         --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
         --error-file^hdfs:///tmp/boosted_trees_work/tree/error.txt^\
+        --binary-mode^0^\
+        --threshold^0.5^\
         --use-indexed-data^0^\
         --save-indexed-data^0
  .
@@ -429,6 +435,8 @@ are provided below.
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_test_data.txt^\
         --model-dir^hdfs:///tmp/boosted_trees_work/forest/^\
         --error-file^hdfs:///tmp/boosted_trees_work/forest/error.txt^\
+        --binary-mode^0^\
+        --threshold^0.5^\
         --use-indexed-data^0^\
         --save-indexed-data^0
  .
