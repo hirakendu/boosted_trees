@@ -47,7 +47,8 @@ object SparkRegressionTree {
 	// 1.1. Function for training a single node, i.e., finding best split
 	//      for a given dataset.
 	
-	def trainNode(node : Node, samples : RDD[Array[Double]], featureTypes : Array[Int],
+	def trainNode(node : Node, samples : RDD[Array[Double]],
+			featureTypes : Array[Int], featureWeights : Array[Double],
 			maxDepth : Int = 4, minGain : Double = 1e-6) :
 			(RDD[Array[Double]], RDD[Array[Double]]) = {
 		
@@ -357,24 +358,25 @@ object SparkRegressionTree {
 		// }
 		})
 		
-		// 3.5. Find the feature with best split.
-		var jMin : Int = 1
-		var minError : Double = errorsForFeatures(1)
+		// 3.5. Find the feature with best split, i.e., maximum weighted gain.
+		var jMax : Int = 1
+		var maxWeightedGain : Double = (node.error - errorsForFeatures(1)) * featureWeights(1)
 		for (j <- 2 to numFeatures - 1) {
-			if (errorsForFeatures(j) < minError) {
-				minError = errorsForFeatures(j)
-				jMin = j
+			val weightedGain : Double = (node.error - errorsForFeatures(j)) * featureWeights(j)
+			if (weightedGain > maxWeightedGain) {
+				maxWeightedGain = weightedGain
+				jMax = j
 			}
 		}
-		node.featureId = jMin
-		node.featureType = featureTypes(jMin)
-		if (featureTypes(jMin) == 0) {
-			node.threshold = thresholdsForFeatures(jMin)
-		} else if (featureTypes(jMin) == 1) {
-			node.leftValues = leftValuesForFeatures(jMin)
-			node.rightValues = rightValuesForFeatures(jMin)
+		node.featureId = jMax
+		node.featureType = featureTypes(jMax)
+		if (featureTypes(jMax) == 0) {
+			node.threshold = thresholdsForFeatures(jMax)
+		} else if (featureTypes(jMax) == 1) {
+			node.leftValues = leftValuesForFeatures(jMax)
+			node.rightValues = rightValuesForFeatures(jMax)
 		}
-		node.splitError = minError
+		node.splitError = errorsForFeatures(jMax)
 		node.gain = node.error - node.splitError
 		
 		// Done finding best split and error.
@@ -398,14 +400,14 @@ object SparkRegressionTree {
 		node.rightChild.get.depth = node.depth + 1
 		var leftSamples : RDD[Array[Double]] = null
 		var rightSamples : RDD[Array[Double]] = null
-		if (featureTypes(jMin) == 0) {
-			leftSamples = samples.filter(sample => sample(jMin) < node.threshold)
-			rightSamples = samples.filter(sample => sample(jMin) >= node.threshold)
-		} else if (featureTypes(jMin) == 1) {
+		if (featureTypes(jMax) == 0) {
+			leftSamples = samples.filter(sample => sample(jMax) < node.threshold)
+			rightSamples = samples.filter(sample => sample(jMax) >= node.threshold)
+		} else if (featureTypes(jMax) == 1) {
 			leftSamples = samples.
-					filter(sample => node.leftValues.contains(sample(jMin).toInt))
+					filter(sample => node.leftValues.contains(sample(jMax).toInt))
 			rightSamples = samples.
-					filter(sample => node.rightValues.contains(sample(jMin).toInt))
+					filter(sample => node.rightValues.contains(sample(jMax).toInt))
 		}
 		
 		return (leftSamples, rightSamples)
@@ -414,6 +416,7 @@ object SparkRegressionTree {
 	// 1.2. Function for training a tree by recursively training/splitting nodes.
 	
 	def trainTree(samples: RDD[Array[Double]], featureTypes : Array[Int],
+			featureWeights : Array[Double],
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minDistributedSamples : Int = 10000) : Node = {
 		val rootNode : Node = new Node
@@ -437,7 +440,7 @@ object SparkRegressionTree {
 				println("      Training Node # " + node.id + ".")
 				val (leftSamples, rightSamples) :
 					(RDD[Array[Double]], RDD[Array[Double]]) =
-						trainNode(node, nodeSamples, featureTypes, maxDepth, minGain)
+						trainNode(node, nodeSamples, featureTypes, featureWeights, maxDepth, minGain)
 				if (!node.isLeaf) {
 					nodesStack.push((node.rightChild.get, rightSamples))
 					nodesStack.push((node.leftChild.get, leftSamples))
@@ -447,7 +450,7 @@ object SparkRegressionTree {
 				val (leftSamplesList, rightSamplesList) :
 					(List[Array[Double]], List[Array[Double]]) =
 						RegressionTree.trainNode(node, nodeSamples.collect.toList,
-								featureTypes, maxDepth, minGain)
+								featureTypes, featureWeights, maxDepth, minGain)
 				if (!node.isLeaf) {
 					val leftSamples : RDD[Array[Double]] = samples.context.parallelize(leftSamplesList, 1)
 					val rightSamples : RDD[Array[Double]] = samples.context.parallelize(rightSamplesList, 1)

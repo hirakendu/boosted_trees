@@ -60,6 +60,14 @@ The dataset format consists of two parts:
     one feature per line. The first line/feature name is always `label`.
     Feature names ending with the dollar character `$` are considered
     to be categorical.
+ 
+ 3. **Feature weights file:** an plain text file containing feature weights,
+    one per line, corresponding to the features in the header file.
+    If there are two many features, one can specify features to exclude
+    or include and generate a 0-1 weights file using the simple
+    feature weights generator program in this package.
+    At each split step, the gains of best splits for features
+    are scaled by their respective weights.
 
 By default, the expected data file is `/tmp/boosted_trees_work/data.txt`
 and header file is `/tmp/boosted_trees_work/header.txt`.
@@ -111,8 +119,21 @@ options are provided below with brief explanations.
           --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
           --save-indexed-data 1
+ 
+ 3. **Feature weights generator**: to generate a 0-1 feature weights file
+ corresponding to features in header file and those specified in the includes
+ and excludes file. The excludes are applied after includes.
+ Use empty arguments (default) or don't specify the argument
+ to include all features.
+ 
+        time scala -cp target/boosted_trees_spark-spark.jar \
+          boosted_trees.FeatureWeightsGenerator \
+          --header-file /tmp/boosted_trees_work/header.txt \
+          --included-features-file /tmp/boosted_trees_work/included_features.txt \
+          --excluded-features-file /tmp/boosted_trees_work/excluded_features.txt \
+          --feature-weights-file /tmp/boosted_trees_work/feature_weights.txt
   
- 3. **Regression tree model trainer**: trains a regression tree model
+ 4. **Regression tree model trainer**: trains a regression tree model
  on training data. Training data can be raw or indexed -- in the former
  case, indexing is performed before training. The output model is saved to
  `/tmp/boosted_trees_work/indexing/tree/nodes.txt` which is used for prediction,
@@ -124,6 +145,7 @@ options are provided below with brief explanations.
         time scala -cp target/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeModelTrainer \
           --header-file /tmp/boosted_trees_work/header.txt \
+          --feature-weights-file "" \
           --data-file /tmp/boosted_trees_work/split/train_data.txt \
           --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
@@ -133,7 +155,7 @@ options are provided below with brief explanations.
           --use-indexed-data 0 \
           --save-indexed-data 0
  
- 4. **Regression tree error analyzer**: predicts on test data using a tree model
+ 5. **Regression tree error analyzer**: predicts on test data using a tree model
  and calculates test error in terms of RMSE (root mean square error)
  and MAE (mean absolute error). Test data can be raw or indexed -- in the former
  case, indexing is performed using same indexes as train data before prediction.
@@ -148,12 +170,12 @@ options are provided below with brief explanations.
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
           --model-dir /tmp/boosted_trees_work/tree/ \
           --error-file /tmp/boosted_trees_work/tree/error.txt \
-          --binary-mode^0^\
-          --threshold^0.5^\
+          --binary-mode 0 \
+          --threshold 0.5 \
           --use-indexed-data 0 \
           --save-indexed-data 0
       
- 5. **Regression tree details printer**: prints detailed information
+ 6. **Regression tree details printer**: prints detailed information
  about a tree model. Reads model from `/tmp/boosted_trees_work/tree/nodes.txt`
  and prints details to `/tmp/boosted_trees_work/tree/tree_details.txt`
  and `/tmp/boosted_trees_work/tree/nodes_details/`.
@@ -183,6 +205,7 @@ options are provided below with brief explanations.
         time scala -cp target/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTModelTrainer \
           --header-file /tmp/boosted_trees_work/header.txt \
+          --feature-weights-file "" \
           --data-file /tmp/boosted_trees_work/split/train_data.txt \
           --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
@@ -206,8 +229,8 @@ options are provided below with brief explanations.
           --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
           --model-dir /tmp/boosted_trees_work/forest/ \
           --error-file /tmp/boosted_trees_work/forest/error.txt \
-          --binary-mode^0^\
-          --threshold^0.5^\
+          --binary-mode 0 \
+          --threshold 0.5 \
           --use-indexed-data 0 \
           --save-indexed-data 0
       
@@ -354,6 +377,7 @@ are provided below.
           --args \
         --spark-master^yarn-standalone^\
         --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
+        --feature-weights-file^^\
         --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
         --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\
@@ -401,6 +425,7 @@ are provided below.
           --args \
         --spark-master^yarn-standalone^\
         --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
+        --feature-weights-file^^\
         --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
         --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
         --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\

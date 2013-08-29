@@ -13,8 +13,13 @@ object DefaultParameters {
 	val trainDataFile : String = workDir + "/split/train_data.txt"
 	val testDataFile : String = workDir + "/split/test_data.txt"
 	
-	// DataIndexer.
+	// FeatureWeightFileGenerator.
 	val headerFile : String = workDir + "/header.txt"
+	val includedFeaturesFile : String = "" // workDir + "/included_features.txt"
+	val excludedFeaturesFile : String = "" // workDir + "/excluded_features.txt"
+	val featureWeightsFile : String =  workDir + "/feature_weights.txt"
+	
+	// DataIndexer.
 	val indexesDir : String = workDir + "/indexing/indexes/"
 	val indexedTrainDataFile : String = workDir + "/indexing/indexed_train_data.txt"
 	

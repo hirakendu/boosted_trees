@@ -37,6 +37,7 @@ object SparkGBRT {
 	// 1. Function for training a forest of trees using gradient boosting.
 	
 	def trainForest(samples : RDD[Array[Double]], featureTypes : Array[Int],
+			featureWeights : Array[Double],
 			numTrees : Int = 5, shrinkage : Double = 0.8,
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minDistributedSamples : Int = 10000,
@@ -70,7 +71,7 @@ object SparkGBRT {
 //			}
 			
 			val rootNode = SparkRegressionTree.trainTree(residualSamples, featureTypes,
-					maxDepth, minGainFraction, minDistributedSamples)
+					featureWeights, maxDepth, minGainFraction, minDistributedSamples)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
 			

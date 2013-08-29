@@ -11,6 +11,7 @@ object GBRTModelTrainer {
 		
 		// 0.0. Default parameters.
 		var headerFile : String = DefaultParameters.headerFile
+		var featureWeightsFile : String = ""
 		var dataFile : String = DefaultParameters.trainDataFile
 		var indexesDir : String =  DefaultParameters.indexesDir
 		var indexedDataFile : String = DefaultParameters.indexedTrainDataFile
@@ -33,6 +34,9 @@ object GBRTModelTrainer {
 			if (("--header-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				headerFile = xargs(argi)
+			} else if (("--feature-weights-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				featureWeightsFile = xargs(argi)
 			} else if (("--data-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				dataFile = xargs(argi)
@@ -81,6 +85,10 @@ object GBRTModelTrainer {
 											// .first.split("\t")
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
+		var featureWeights : Array[Double] = Range(0, features.length).map(x => 1.0).toArray
+		if (!featureWeightsFile.equals("")) {
+			featureWeights = Source.fromFile(new File(featureWeightsFile)).getLines.toArray.map(_.toDouble)
+		}
 		
 		// 1.2 Read data and index it.
 		
@@ -108,7 +116,7 @@ object GBRTModelTrainer {
 		println("\n  Training forest model.\n")
 		
 		val rootNodes : Array[Node] = GBRT.trainForest(samples, featureTypes,
-				numTrees, shrinkage, maxDepth, minGainFraction)
+				featureWeights, numTrees, shrinkage, maxDepth, minGainFraction)
 		
 		
 		// 3. Print and save the tree.
