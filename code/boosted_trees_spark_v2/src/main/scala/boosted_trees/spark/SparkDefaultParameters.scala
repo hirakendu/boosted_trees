@@ -6,9 +6,9 @@ object SparkDefaultParameters {
 	val sparkMaster : String = "local[2]"
 	val sparkHome : String = "/opt/spark"
 	val sparkAppJars : String = null // "boosted_trees_spark-spark.jar"
-	val workDir : String = "file:///tmp/boosted_trees_work"
-		
-	// DataSampler.
+	val workDir : String = "file://" + System.getenv("HOME") + "/temp/boosted_trees_work"
+	
+	// SparkDataSampler.
 	val sampleDataFile : String = workDir + "/sample_data.txt"
 	val sampleRate : Double = 0.01
 	
@@ -16,6 +16,14 @@ object SparkDefaultParameters {
 	val dataFile : String = workDir + "/data.txt"
 	val trainDataFile : String = workDir + "/split/train_data.txt"
 	val testDataFile : String = workDir + "/split/test_data.txt"
+	
+	// SparkBinaryDataGenerator.
+	val binaryDataFile : String = workDir + "/binary_data.txt"
+	
+	// SparkWeightedDataGenerator.
+	val weightedDataHeaderFile : String = workDir + "/weighted_data_header.txt"
+	val weightStepsFile : String =  workDir + "/weight_steps.txt"
+	val weightedDataFile : String = workDir + "/indexing/indexed_weighted_data.txt"
 	
 	// SparkDataIndexer.
 	val headerFile : String = workDir + "/header.txt"

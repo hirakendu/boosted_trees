@@ -41,6 +41,7 @@ object SparkGBRT {
 			numTrees : Int = 5, shrinkage : Double = 0.8,
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minDistributedSamples : Int = 10000,
+			useSampleWeights : Int = 0,
 			initialNumTrees : Int = 0) : Array[Node] = {
 //		val residualSamples : RDD[Array[Double]] = samples.map(_.clone)
 //				// New. Create a copy of samples which will be modified over iterations.
@@ -71,7 +72,8 @@ object SparkGBRT {
 //			}
 			
 			val rootNode = SparkRegressionTree.trainTree(residualSamples, featureTypes,
-					featureWeights, maxDepth, minGainFraction, minDistributedSamples)
+					featureWeights, maxDepth, minGainFraction,
+					minDistributedSamples, useSampleWeights)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
 			
@@ -96,7 +98,7 @@ object SparkGBRT {
 			saveAsTextFile(nodesDir + "/num_trees.txt")
 	}
 	
-	// 2.2. Function to print a forest model for easy reading.// Function to print forest model for easy reading.
+	// 2.2. Function to print a forest model for easy reading.
 	
 	def printForest(sc : SparkContext, treesDir : String, rootNodes : Array[Node],
 			initialNumTrees : Int = 0) : Unit = {

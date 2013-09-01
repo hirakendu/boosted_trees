@@ -29,6 +29,7 @@ object SparkGBRTModelTrainer {
 		var maxDepth : Int = 4
 		var minGainFraction : Double = 0.01
 		var minDistributedSamples : Int = 10000
+		var useSampleWeights : Int = 0
 		var initialNumTrees : Int = 0
 		var residualMode : Int = 0
 		var useIndexedData : Int = 0
@@ -97,6 +98,9 @@ object SparkGBRTModelTrainer {
 			} else if (("--min-distributed-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minDistributedSamples = xargs(argi).toInt
+			} else if (("--use-sample-weights".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useSampleWeights = xargs(argi).toInt
 			} else if (("--initial-num-trees".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				initialNumTrees = xargs(argi).toInt
@@ -223,7 +227,7 @@ object SparkGBRTModelTrainer {
 		val rootNodes : Array[Node] = SparkGBRT.trainForest(residualSamples,
 				featureTypes, featureWeights,
 				numTrees, shrinkage, maxDepth, minGainFraction,
-				minDistributedSamples, initialNumTrees)
+				minDistributedSamples, useSampleWeights, initialNumTrees)
 		
 		finalTime = System.currentTimeMillis
 		println("  Time taken = " + ((finalTime - initialTime) / 1000) + " s.")

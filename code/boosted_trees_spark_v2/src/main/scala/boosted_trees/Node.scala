@@ -8,6 +8,7 @@ class Node extends Serializable {
 	var response : Double = 0.0
 
 	var numSamples : Long = 0
+	var weight : Double = 0.0
 	var error : Double = 0.0
 	var splitError : Double = 0.0
 	var gain : Double = 0.0

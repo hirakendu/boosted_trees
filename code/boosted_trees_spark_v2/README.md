@@ -46,31 +46,23 @@ predicting and evaluating error a test dataset.
 They can be run using `scala` by including the `boosted_trees_spark-spark.jar`
 in classpath. This does not require a Spark installation.
 
-The programs create and use the directory `/tmp/boosted_trees_work/`
+The programs use the directory `${HOME}/temp/boosted_trees_work/`
 by default for various working files and folders.
-The dataset format consists of two parts:
+The dataset format primarily consists of two parts:
 
  1. **Data file**: a plain text file containing one sample per line,
     each sample consisting of tab separated feature values.
     The first field/value in each line is considered to be the _label_.
     The values correspond to continuous (numbers) or
     categorical features (text).
-    
+     
  2. **Header/schema file:** a plain text file containing the feature names,
     one feature per line. The first line/feature name is always `label`.
     Feature names ending with the dollar character `$` are considered
     to be categorical.
- 
- 3. **Feature weights file:** an plain text file containing feature weights,
-    one per line, corresponding to the features in the header file.
-    If there are two many features, one can specify features to exclude
-    or include and generate a 0-1 weights file using the simple
-    feature weights generator program in this package.
-    At each split step, the gains of best splits for features
-    are scaled by their respective weights.
-
-By default, the expected data file is `/tmp/boosted_trees_work/data.txt`
-and header file is `/tmp/boosted_trees_work/header.txt`.
+    
+By default, the expected data file is `${HOME}/temp/boosted_trees_work/data.txt`
+and header file is `${HOME}/temp/boosted_trees_work/header.txt`.
 
 A sample dataset is provided in `data/auto-mpg` folder along with
 modeling results. This is a well known dataset taken from
@@ -78,181 +70,263 @@ modeling results. This is a well known dataset taken from
 Pre-processing steps are described in `data/auto-mpg/notes.txt`.
 For an example run, copy this to the work folder as follows:
 
-    rm -rf /tmp/boosted_trees_work && mkdir /tmp/boosted_trees_work
-    cp -a data/auto-mpg/{data.txt,header.txt,split} /tmp/boosted_trees_work/
+    rm -rf ${HOME}/temp/boosted_trees_work && mkdir ${HOME}/temp/boosted_trees_work
+    cp -a data/auto-mpg/{data.txt,header.txt,split} ${HOME}/temp/boosted_trees_work/
+
+In addition, one can optionally assign weights to features and
+training samples using the following files:
+
+ 3. **Feature weights file (optional):** a plain text file containing feature weights,
+    one per line, corresponding to the features in the header file.
+    If there are two many features, one can specify features to exclude
+    or include and generate a 0-1 weights file using the simple
+    feature weights generator program in this package.
+    At each split step, the gains of best splits for features
+    are scaled by their respective weights.
+     
+ 4. **Weight steps file (optional):** a plain text file describing the weights
+    to assign for samples in various bins, in turn defined by thresholds
+    for output values. The thresholds should also be described in this file,
+    and interleave the weights. Thus, if there are `B` bins defined by
+    `B-1` thresholds `(t_1,...,t_{B-1})` for output values, and
+    the weights are `(w_1,..., w_B)`, the file should contain
+
+        w_1
+        t_1
+        w_2
+        t_2
+        ...
+        t_{B-1}
+        t_B
+
+    Thus, if the file just contains one line, `1`, then it is equivalent
+    to the unweighted case. See the weighted data generator programs for using
+    the weight-steps file to attach weights to training samples.
 
 The program names and their parameters are mostly self-explanatory.
 Sample commands for running each of these programs and their default
 options are provided below with brief explanations.
+For examples, we assume that the `${JARS}` folder contains
+`boosted-trees_spark-spark.jar` and the working directory is
+`${WORK}`, say
 
- 0. **Data sampler**: takes a small sample fraction of a big dataset.
+    export JARS="${HOME}/jars/"
+    export WORK="${HOME}/temp/boosted_trees_work"
+.
 
-        time scala -cp target/boosted_trees_spark-spark.jar \
-          boosted_trees.DataSampler \
-          --data-file /tmp/boosted_trees_work/data.txt \
-          --sample-data-file /tmp/boosted_trees_work/sample_data.txt \
-          --sample-rate 0.01
-
- 1. **Train-test splitter**: partitions the data into train and
- test sets: `/tmp/boosted_trees_work/split/train_data.txt` and
- `/tmp/boosted_trees_work/split/test_data.txt`.
-
-        time scala -cp target/boosted_trees_spark-spark.jar \
-          boosted_trees.TrainTestSplitter \
-          --data-file /tmp/boosted_trees_work/data.txt \
-          --train-data-file /tmp/boosted_trees_work/split/train_data.txt \
-          --test-data-file /tmp/boosted_trees_work/split/test_data.txt \
-          --train-fraction 0.8
+ 1. **Data sampler**: takes a small sample fraction of a big dataset.
     
- 2. **Data indexer**: indexes the categorical feature values observed
- in the train set to integer values and encodes the training data
- using the generated indexes. The indexes are used later
- on for prediction and test data analysis. For each categorical feature called
- `<feature_name>$`, it generates an index file
- `/tmp/boosted_trees_work/indexing/indexes/<feature_name>_index.txt`.
- The encoded train data is `/tmp/boosted_trees_work/indexing/indexed_train_data.txt`.
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
+          boosted_trees.DataSampler \
+          --data-file ${WORK}/data.txt \
+          --sample-data-file ${WORK}/sample_data.txt \
+          --sample-rate 0.01
+     
+ 2. **Binary data generator**: converts a regression dataset into a binary
+    classification dataset by thresholding response values to 0 and 1 based on
+    a given threshold.
 
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
+          boosted_trees.BinaryDataGenerator \
+          --data-file ${WORK}/data.txt \
+          --binary-data-file ${WORK}/binary_data.txt \
+          --threshold 0.5
+     
+ 3. **Train-test splitter**: partitions the data into train and
+    test sets: `${WORK}/split/train_data.txt` and
+    `${WORK}/split/test_data.txt`.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
+          boosted_trees.TrainTestSplitter \
+          --data-file ${WORK}/data.txt \
+          --train-data-file ${WORK}/split/train_data.txt \
+          --test-data-file ${WORK}/split/test_data.txt \
+          --train-fraction 0.8
+     
+ 4. **Data indexer**: indexes the categorical feature values observed
+    in the train set to integer values and encodes the training data
+    using the generated indexes. The indexes are used later
+    on for prediction and test data analysis. For each categorical feature called
+    `<feature_name>$`, it generates an index file
+    `${WORK}/indexing/indexes/<feature_name>_index.txt`.
+    The encoded train data is `${WORK}/indexing/indexed_train_data.txt`.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.DataIndexer \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --data-file /tmp/boosted_trees_work/split/train_data.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
+          --header-file ${WORK}/header.txt \
+          --data-file ${WORK}/split/train_data.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
           --save-indexed-data 1
- 
- 3. **Feature weights generator**: to generate a 0-1 feature weights file
- corresponding to features in header file and those specified in the includes
- and excludes file. The excludes are applied after includes.
- Use empty arguments (default) or don't specify the argument
- to include all features.
- 
-        time scala -cp target/boosted_trees_spark-spark.jar \
+     
+ 5. **Weighted data generator**: generates a dataset with weights attached
+    to training samples using a given training dataset and a weight-steps file.
+    The weights are attached at the end as an extra field.
+    The program can be used before indexing step as well on the raw training data.
+    Can also be used as a template for other ways of weighting samples.
+    The generated header file that contains an extra feature called `sample_weight`
+    should be used subsequently for model training programs.
+    This is not required for prediction for testing/runtime since
+    the model outputs are not affected explicitly.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
+          boosted_trees.WeightedDataGenerator \
+          --header-file ${WORK}/header.txt \
+          --weighted-data-header-file ${WORK}/weighted_data_header.txt \
+          --data-file ${WORK}/indexing/indexed_train_data.txt \
+          --weighted-data-file ${WORK}/indexing/indexed_weighted_train_data.txt
+              
+ 6. **Feature weights generator**: to generate a 0-1 feature weights file
+    corresponding to features in header file and those specified in the includes
+    and excludes file. The excludes are applied after includes.
+    Use empty arguments (default) or don't specify the argument
+    to include all features.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.FeatureWeightsGenerator \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --included-features-file /tmp/boosted_trees_work/included_features.txt \
-          --excluded-features-file /tmp/boosted_trees_work/excluded_features.txt \
-          --feature-weights-file /tmp/boosted_trees_work/feature_weights.txt
-  
- 4. **Regression tree model trainer**: trains a regression tree model
- on training data. Training data can be raw or indexed -- in the former
- case, indexing is performed before training. The output model is saved to
- `/tmp/boosted_trees_work/indexing/tree/nodes.txt` which is used for prediction,
- for analyzing test error or runtime. An easy-to-read version is printed
- to `/tmp/boosted_trees_work/tree/tree.txt`.
- The baseline is trivial constant response, the average output of train data,
- and the corresponding RMSE (root of sample variance) and MAE. 
- 
-        time scala -cp target/boosted_trees_spark-spark.jar \
+          --header-file ${WORK}/header.txt \
+          --included-features-file ${WORK}/included_features.txt \
+          --excluded-features-file ${WORK}/excluded_features.txt \
+          --feature-weights-file ${WORK}/feature_weights.txt
+     
+ 7. **Regression tree model trainer**: trains a regression tree model
+    on training data. Training data can be raw or indexed -- in the former
+    case, indexing is performed before training. The output model is saved to
+    `${WORK}/indexing/tree/nodes.txt` which is used for prediction,
+    for analyzing test error or runtime. An easy-to-read version is printed
+    to `${WORK}/tree/tree.txt`.
+    The baseline is trivial constant response, the average output of train data,
+    and the corresponding RMSE (root of sample variance) and MAE.
+    Empty feature weights file or omitted argument indicates no feature weights.
+    If using sample weights, use the appropriate data and header file.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeModelTrainer \
-          --header-file /tmp/boosted_trees_work/header.txt \
+          --header-file ${WORK}/header.txt \
           --feature-weights-file "" \
-          --data-file /tmp/boosted_trees_work/split/train_data.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
-          --model-dir /tmp/boosted_trees_work/tree/ \
+          --data-file ${WORK}/split/train_data.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
+          --model-dir ${WORK}/tree/ \
           --max-depth 5 \
           --min-gain-fraction 0.01 \
+          --use-sample-weights 0 \
           --use-indexed-data 0 \
           --save-indexed-data 0
- 
- 5. **Regression tree error analyzer**: predicts on test data using a tree model
- and calculates test error in terms of RMSE (root mean square error)
- and MAE (mean absolute error). Test data can be raw or indexed -- in the former
- case, indexing is performed using same indexes as train data before prediction.
- Reads tree model from `/tmp/boosted_trees_work/tree/tree.txt`.
- The output errors are saved to `/tmp/boosted_trees_work/tree/error.txt`.
- 
-        time scala -cp target/boosted_trees_spark-spark.jar \
+     
+ 8. **Regression tree error analyzer**: predicts on test data using a tree model
+    and calculates test error in terms of RMSE (root mean square error)
+    and MAE (mean absolute error). Test data can be raw or indexed -- in the former
+    case, indexing is performed using same indexes as train data before prediction.
+    Reads tree model from `${WORK}/tree/tree.txt`.
+    The output errors are saved to `${WORK}/tree/error.txt`.
+
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeErrorAnalyzer \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --data-file /tmp/boosted_trees_work/split/test_data.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
-          --model-dir /tmp/boosted_trees_work/tree/ \
-          --error-file /tmp/boosted_trees_work/tree/error.txt \
+          --header-file ${WORK}/header.txt \
+          --data-file ${WORK}/split/test_data.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
+          --model-dir ${WORK}/tree/ \
+          --error-file ${WORK}/tree/error.txt \
           --binary-mode 0 \
           --threshold 0.5 \
           --use-indexed-data 0 \
           --save-indexed-data 0
-      
- 6. **Regression tree details printer**: prints detailed information
- about a tree model. Reads model from `/tmp/boosted_trees_work/tree/nodes.txt`
- and prints details to `/tmp/boosted_trees_work/tree/tree_details.txt`
- and `/tmp/boosted_trees_work/tree/nodes_details/`.
+        
+ 9. **Regression tree details printer**: prints detailed information
+    about a tree model. Reads model from `${WORK}/tree/nodes.txt`
+    and prints details to `${WORK}/tree/tree_details.txt`
+    and `${WORK}/tree/nodes_details/`.
  
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeDetailsPrinter \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --model-dir /tmp/boosted_trees_work/tree/
-
- 7. **Regression tree DOT printer**: prints a Graphviz DOT file that
- illustrates a tree model. Also prints PDF if `graphviz` and `dot` are installed.
- Reads model from `/tmp/boosted_trees_work/tree/nodes.txt`
- and prints details to `/tmp/boosted_trees_work/tree/tree.dot`
- and `/tmp/boosted_trees_work/tree/tree/tree.pdf`.
+          --header-file ${WORK}/header.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --model-dir ${WORK}/tree/
+     
+ 10. **Regression tree DOT printer**: prints a Graphviz DOT file that
+    illustrates a tree model. Also prints PDF if `graphviz` and `dot` are installed.
+    Reads model from `${WORK}/tree/nodes.txt`
+    and prints details to `${WORK}/tree/tree.dot`
+    and `${WORK}/tree/tree.pdf`.
  
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeDotPrinter \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --model-dir /tmp/boosted_trees_work/tree/
-          
- 8. **GBRT model trainer**: trains a GBRT forest model on training data.
- Most options are similar to regression tree model trainer.
- The output model is saved to `/tmp/boosted_trees_work/indexing/tree/forest/nodes/`.
- An easy-to-read version is printed to `/tmp/boosted_trees_work/forest/trees/`.
+          --header-file ${WORK}/header.txt \
+          --model-dir ${WORK}/tree/
+             
+ 11. **GBRT model trainer**: trains a GBRT forest model on training data.
+    Most options are similar to regression tree model trainer.
+    The output model is saved to `${WORK}/indexing/tree/forest/nodes/`.
+    An easy-to-read version is printed to `${WORK}/forest/trees/`.
  
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTModelTrainer \
-          --header-file /tmp/boosted_trees_work/header.txt \
+          --header-file ${WORK}/header.txt \
           --feature-weights-file "" \
-          --data-file /tmp/boosted_trees_work/split/train_data.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_train_data.txt \
-          --model-dir /tmp/boosted_trees_work/forest/ \
+          --data-file ${WORK}/split/train_data.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
+          --model-dir ${WORK}/forest/ \
           --num-trees 5 \
           --shrinkage 0.8 \
           --max-depth 4 \
           --min-gain-fraction 0.01 \
+          --use-sample-weights 0 \
           --use-indexed-data 0 \
           --save-indexed-data 0
+     
+ 12. **GBRT error analyzer**: predicts on test data using a forest model
+    and calculates errors. Most options are similar to
+    regression tree error analyzer.
  
- 9. **GBRT error analyzer**: predicts on test data using a forest model
- and calculates errors. Most options are similar to
- regression tree error analyzer.
- 
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTErrorAnalyzer \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --data-file /tmp/boosted_trees_work/split/test_data.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --indexed-data-file /tmp/boosted_trees_work/indexing/indexed_test_data.txt \
-          --model-dir /tmp/boosted_trees_work/forest/ \
-          --error-file /tmp/boosted_trees_work/forest/error.txt \
+          --header-file ${WORK}/header.txt \
+          --data-file ${WORK}/split/test_data.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
+          --model-dir ${WORK}/forest/ \
+          --error-file ${WORK}/forest/error.txt \
           --binary-mode 0 \
           --threshold 0.5 \
           --use-indexed-data 0 \
           --save-indexed-data 0
-      
- 10. **GBRT details printer**: prints detailed information
- about a forest model.
+         
+ 13. **GBRT details printer**: prints detailed information
+    about a forest model.
  
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTDetailsPrinter \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --indexes-dir /tmp/boosted_trees_work/indexing/indexes/ \
-          --model-dir /tmp/boosted_trees_work/forest/
+          --header-file ${WORK}/header.txt \
+          --indexes-dir ${WORK}/indexing/indexes/ \
+          --model-dir ${WORK}/forest/
           
- 11. **GBRT DOT printer**: prints Graphviz DOT files that
- illustrates the trees in a forest model.
- Also prints PDF if `graphviz` and `dot` are installed.
+ 14. **GBRT DOT printer**: prints Graphviz DOT files that
+    illustrates the trees in a forest model.
+    Also prints PDF if `graphviz` and `dot` are installed.
  
-        time scala -cp target/boosted_trees_spark-spark.jar \
+        time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTDotPrinter \
-          --header-file /tmp/boosted_trees_work/header.txt \
-          --model-dir /tmp/boosted_trees_work/forest/
+          --header-file ${WORK}/header.txt \
+          --model-dir ${WORK}/forest/
 
 ### Distributed Spark programs
+
+The files and folders are to be specified with the protocol
+and full path. Both file:// for local and hdfs:// for HDFS locations
+are supported by Spark. Any text file written out by Spark using Hadoop
+API is in the form of a folder with part files inside it.
+Use the script `hadoop_txt_compact.sh` in the `scripts/` folder
+to compact them into usual text files.
+
+The working directory in these examples is assumed to be `${DIST_WORK}`, say
+
+    export DIST_WORK="file:///${HOME}/temp/boosted_trees_work/"  # for local
+    # or
+    export DIST_WORK="hdfs:///user/${USER}/temp/boosted_trees_work/"  # for cluster
+.
 
 Depending on the Spark cluster setup, there are different ways of
 running the distributed versions of the programs.
@@ -273,199 +347,191 @@ Thus, to run the data sampler program locally with
 2 workers and 2 cores per worker, the command is:
 
     time \
-    SPARK_CLASSPATH=$(pwd)/target/boosted_trees_spark-spark.jar \
+    SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
     spark_local_run.sh boosted_trees.spark.SparkDataSampler \
       --spark-master local[2,2] \
-      --data-file file:///tmp/boosted_trees_work/data.txt \
-      --sample-data-file file:///tmp/boosted_trees_work/sample_data.txt \
+      --data-file ${DIST_WORK}/data.txt \
+      --sample-data-file ${DIST_WORK}/sample_data.txt \
       --sample-rate 0.01 \
       2>spark_log.txt
-      
+  
 or as caret separated:
 
     time \
-    SPARK_CLASSPATH=$(pwd)/target/boosted_trees_spark-spark.jar \
+    SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
     spark_local_run.sh boosted_trees.spark.SparkDataSampler \
-    --spark-master^local[4]^\
-    --data-file^file:///tmp/boosted_trees_work/data.txt^\
-    --sample-data-file^file:///tmp/boosted_trees_work/sample_data.txt^\
+    --spark-master^local[2,2]^\
+    --data-file^${DIST_WORK}/data.txt^\
+    --sample-data-file^${DIST_WORK}/sample_data.txt^\
     --sample-rate^0.01 \
       2>spark_log.txt
 
 . To run on a Hadoop 2 (Yarn) cluster:
 
     time spark_yarn_run.sh \
-      --jar $(pwd)/target/boosted_trees_spark-spark.jar \
+      --jar ${JARS}/boosted_trees_spark-spark.jar \
       --class boosted_trees.spark.SparkDataSampler \
-      --num-workers 4  \
+      --num-workers 4 \
       --worker-memory 3g \
-      --worker-cores 2 \
+      --worker-cores 1 \
+      --master-memory 3g \
       --queue default \
       --args \
     --spark-master^yarn-standalone^\
-    --data-file^hdfs:///tmp/boosted_trees_work/data.txt^\
-    --sample-data-file^hdfs:///tmp/boosted_trees_work/sample_data.txt^\
+    --data-file^${DIST_WORK}/data.txt^\
+    --sample-data-file^${DIST_WORK}/sample_data.txt^\
     --sample-rate^0.01
 
 . For running on Yarn cluster, the `spark-master` is to be specified
 as 	`yarn-standalone` and the arguments to the program are merged
 into a single argument separated by carets `^` and passed as `args`.
 
-The files and folders are to be specified with the protocol
-and full path. Both file:// for local and hdfs:// for HDFS locations
-are supported by Spark. Any text file written out by Spark using Hadoop
-API is in the form of a folder with part files inside it.
-Use the script `hadoop_txt_compact.sh` in the `scripts/` folder
-to compact them into usual text files.
-
-For an example run on the auto-mpg dataset on Yarn, copy it to HDFS:
-
-    hadoop fs -rm -r -f /tmp/boosted_trees_work
-    hadoop fs -mkdir -p /tmp/boosted_trees_work
-    hadoop fs -copyFromLocal data/auto-mpg/data.txt data/auto-mpg/split data/auto-mpg/header.txt /tmp/boosted_trees_work/
-    hadoop fs -ls /tmp/boosted_trees_work
-.
-
 Examples of the respective commands for distributed programs
-using `spark_yarn_run.sh` similar to the single machine version
-are provided below.
+using `spark_local_run.sh` similar to the single machine version
+are provided below. For examples of the same on Yarn cluster using
+`spark_yarn_run.sh`, see [yarn_examples](docs/yarn_examples.md).
 
- 1. **Spark Train-test splitter**:
- 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkTrainTestSplitter \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --data-file^hdfs:///tmp/boosted_trees_work/data.txt^\
-        --train-data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
-        --test-data-file^hdfs:///tmp/boosted_trees_work/split/test_data.txt^\
-        --train-fraction^0.8
- .
+ 1. **Data sampler**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkDataSampler \
+        --spark-master^local[4]^\
+        --data-file^${DIST_WORK}/data.txt^\
+        --sample-data-file^${DIST_WORK}/sample_data.txt^\
+        --sample-rate^0.01 \
+          2>spark_log.txt
      
- 2. **Spark Data indexer**:
+ 2. **Binary data generator**:
 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkDataIndexer \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
-        --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
-        --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
-        --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\
-        --save-indexed-data^1
- .
-  
- 3. **Spark Regression tree model trainer**:
- 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkRegressionTreeModelTrainer \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkBinaryDataGenerator \
+        --spark-master^local[4]^\
+        --data-file^${DIST_WORK}/data.txt^\
+        --binary-data-file^${DIST_WORK}/binary_data.txt^\
+        --threshold^0.5 \
+          2>spark_log.txt
+            
+ 3. **Train-test splitter**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkTrainTestSplitter \
+        --spark-master^local[4]^\
+        --data-file^${DIST_WORK}/data.txt^\
+        --train-data-file^${DIST_WORK}/split/train_data.txt^\
+        --test-data-file^${DIST_WORK}/split/test_data.txt^\
+        --train-fraction^0.8 \
+          2>spark_log.txt
+     
+ 4. **Data indexer**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkDataIndexer \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
+        --data-file^${DIST_WORK}/split/train_data.txt^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
+        --save-indexed-data^1 \
+          2>spark_log.txt
+     
+ 5. **Weighted data generator**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkWeightedDataGenerator \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
+        --weighted-data-header-file^${DIST_WORK}/weighted_data_header.txt^\
+        --data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
+        --weighted-data-file^${DIST_WORK}/indexing/indexed_weighted_train_data.txt \
+          2>spark_log.txt
+     
+ 6. **Regression tree model trainer**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkRegressionTreeModelTrainer \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
-        --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
-        --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
-        --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\
-        --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
+        --data-file^${DIST_WORK}/split/train_data.txt^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
+        --model-dir^${DIST_WORK}/tree/^\
         --max-depth^5^\
         --min-gain-fraction^0.01^\
         --min-distributed-samples^10000^\
+        --use-sample-weights^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0
- .
- 
- 4. **Spark Regression tree error analyzer**:
- 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkRegressionTreeErrorAnalyzer \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
-        --data-file^hdfs:///tmp/boosted_trees_work/split/test_data.txt^\
-        --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
-        --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_test_data.txt^\
-        --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
-        --error-file^hdfs:///tmp/boosted_trees_work/tree/error.txt^\
+        --cache-indexed-data^0 \
+          2>spark_log.txt
+     
+ 7. **Regression tree error analyzer**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkRegressionTreeErrorAnalyzer \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
+        --data-file^${DIST_WORK}/split/test_data.txt^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
+        --model-dir^${DIST_WORK}/tree/^\
+        --error-file^${DIST_WORK}/tree/error.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
         --use-indexed-data^0^\
-        --save-indexed-data^0
- .
- 
- 5. **Spark GBRT model trainer**:
- 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkGBRTModelTrainer \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
+        --save-indexed-data^0 \
+          2>spark_log.txt
+     
+ 8. **GBRT model trainer**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkGBRTModelTrainer \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
-        --data-file^hdfs:///tmp/boosted_trees_work/split/train_data.txt^\
-        --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
-        --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_train_data.txt^\
-        --residual-data-file^hdfs:///tmp/boosted_trees_work/indexing/residual_data.txt^\
-        --model-dir^hdfs:///tmp/boosted_trees_work/tree/^\
+        --data-file^${DIST_WORK}/split/train_data.txt^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
+        --residual-data-file^${DIST_WORK}/indexing/residual_data.txt^\
+        --model-dir^${DIST_WORK}/forest/^\
         --num-trees^5^\
         --shrinkage^0.8^\
         --max-depth^4^\
         --min-gain-fraction^0.01^\
         --min-distributed-samples^10000^\
+        --use-sample-weights^0^\
         --initial-num-trees^0^\
         --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0
- .
- 
- 6. **Spark GBRT error analyzer**:
- 
-        time spark_yarn_run.sh \
-          --jar $(pwd)/target/boosted_trees_spark-spark.jar \
-          --class boosted_trees.spark.SparkGBRTErrorAnalyzer \
-          --num-workers 4  \
-          --worker-memory 2g \
-          --worker-cores 2 \
-          --queue default \
-          --args \
-        --spark-master^yarn-standalone^\
-        --header-file^hdfs:///tmp/boosted_trees_work/header.txt^\
-        --data-file^hdfs:///tmp/boosted_trees_work/split/test_data.txt^\
-        --indexes-dir^hdfs:///tmp/boosted_trees_work/indexing/indexes/^\
-        --indexed-data-file^hdfs:///tmp/boosted_trees_work/indexing/indexed_test_data.txt^\
-        --model-dir^hdfs:///tmp/boosted_trees_work/forest/^\
-        --error-file^hdfs:///tmp/boosted_trees_work/forest/error.txt^\
+        --cache-indexed-data^0 \
+          2>spark_log.txt
+     
+ 9. **GBRT error analyzer**:
+
+        time \
+        SPARK_CLASSPATH=${JARS}/boosted_trees_spark-spark.jar \
+        spark_local_run.sh boosted_trees.spark.SparkGBRTErrorAnalyzer \
+        --spark-master^local[4]^\
+        --header-file^${DIST_WORK}/header.txt^\
+        --data-file^${DIST_WORK}/split/test_data.txt^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
+        --model-dir^${DIST_WORK}/forest/^\
+        --error-file^${DIST_WORK}/forest/error.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
         --use-indexed-data^0^\
-        --save-indexed-data^0
- .
-
+        --save-indexed-data^0 \
+          2>spark_log.txt
 
 ## Devel
 

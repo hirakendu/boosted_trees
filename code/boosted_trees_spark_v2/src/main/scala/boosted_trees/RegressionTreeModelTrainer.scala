@@ -18,6 +18,7 @@ object RegressionTreeModelTrainer {
 		var modelDir : String = DefaultParameters.treeModelDir
 		var maxDepth : Int = 5
 		var minGainFraction : Double = 0.01
+		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 
@@ -53,6 +54,9 @@ object RegressionTreeModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--use-sample-weights".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useSampleWeights = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -106,8 +110,8 @@ object RegressionTreeModelTrainer {
 		
 		println("\n  Training tree model.\n")
 		
-		val rootNode : Node = RegressionTree.trainTree(samples, featureTypes, featureWeights,
-				maxDepth, minGainFraction)
+		val rootNode : Node = RegressionTree.trainTree(samples, featureTypes,
+				featureWeights, maxDepth, minGainFraction, useSampleWeights)
 		
 		
 		// 3. Print and save the tree.

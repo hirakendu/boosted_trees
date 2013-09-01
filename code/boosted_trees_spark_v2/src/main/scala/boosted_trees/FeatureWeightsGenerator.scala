@@ -45,6 +45,8 @@ object FeatureWeightsGenerator {
 			argi += 1
 		}
 		
+		
+		// 1. Read list of all features, and features to include and exclude.
 		val features : Array[String] =  Source.fromFile(new File(headerFile)).
 				getLines.toArray
 		
@@ -56,14 +58,18 @@ object FeatureWeightsGenerator {
 					getLines.toSet
 		}
 		
+		
 		var excludedFeatures : Set[String] = Set()
 		if (!excludedFeaturesFile.equals("")) {
 			excludedFeatures = Source.fromFile(new File(excludedFeaturesFile)).
 					getLines.toSet
 		}
 		
+		// 2. Generate feature weights and save.
+		
 		val featureWeights : Array[Double] = new Array(numFeatures)
-		for (j <- 0 to numFeatures - 1) {
+		featureWeights(0) = 1
+		for (j <- 1 to numFeatures - 1) {
 			if (includedFeatures.contains(features(j)) &&
 					!excludedFeatures.contains(features(j))) {
 				featureWeights(j) = 1

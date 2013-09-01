@@ -54,7 +54,8 @@ object GBRT {
 	def trainForest(samples : List[Array[Double]], featureTypes : Array[Int],
 			featureWeights : Array[Double],
 			numTrees : Int = 5, shrinkage : Double = 0.8,
-			maxDepth : Int = 4, minGainFraction : Double = 0.01) : Array[Node] = {
+			maxDepth : Int = 4, minGainFraction : Double = 0.01,
+			useSampleWeights : Int = 0) : Array[Node] = {
 		val residualSamples : List[Array[Double]] = samples.par.map(_.clone).toList
 				// Create a copy of samples which will be modified over iterations.
 		val rootNodes : Array[Node] = new Array(numTrees)
@@ -78,7 +79,7 @@ object GBRT {
 				})
 			}
 			val rootNode = RegressionTree.trainTree(residualSamples, featureTypes,
-					featureWeights, maxDepth, minGainFraction)
+					featureWeights, maxDepth, minGainFraction, useSampleWeights)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
 		}

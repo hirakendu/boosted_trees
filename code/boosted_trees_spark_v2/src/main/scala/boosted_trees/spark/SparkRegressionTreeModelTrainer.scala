@@ -25,6 +25,7 @@ object SparkRegressionTreeModelTrainer {
 		var maxDepth : Int = 5
 		var minGainFraction : Double = 0.01
 		var minDistributedSamples : Int = 10000
+		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		var cacheIndexedData : Int = 0
@@ -82,6 +83,9 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--min-distributed-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minDistributedSamples = xargs(argi).toInt
+			} else if (("--use-sample-weights".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useSampleWeights = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -155,7 +159,8 @@ object SparkRegressionTreeModelTrainer {
 		}
 		
 		val rootNode : Node = SparkRegressionTree.trainTree(samples, featureTypes,
-				featureWeights, maxDepth, minGainFraction, minDistributedSamples)
+				featureWeights, maxDepth, minGainFraction,
+				minDistributedSamples, useSampleWeights)
 		
 		
 		// 3. Print and save the tree.

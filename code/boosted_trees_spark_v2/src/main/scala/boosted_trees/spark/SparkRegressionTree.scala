@@ -49,7 +49,8 @@ object SparkRegressionTree {
 	
 	def trainNode(node : Node, samples : RDD[Array[Double]],
 			featureTypes : Array[Int], featureWeights : Array[Double],
-			maxDepth : Int = 4, minGain : Double = 1e-6) :
+			maxDepth : Int = 4, minGain : Double = 1e-6,
+			useSampleWeights: Int = 0) :
 			(RDD[Array[Double]], RDD[Array[Double]]) = {
 		
 		// 0. Parameters.
@@ -60,13 +61,29 @@ object SparkRegressionTree {
 		println("        Calculating initial node statistics.")
 		var initialTime : Long = System.currentTimeMillis
 		
-		val stats : (Long, Double, Double) = samples.
+		val numFeatures : Int = featureTypes.length
+		if (useSampleWeights == 0) {
+			val stats : (Long, Double, Double) = samples.
 				map(sample => (1L, sample(0), sample(0) * sample(0))).
 				reduce((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3))
-		node.numSamples = stats._1
-		node.response = stats._2 / stats._1
-		node.error = stats._3 - stats._2 * stats._2 / stats._1
+			node.numSamples = stats._1
+			node.weight = stats._1
+			node.response = stats._2 / stats._1
+			node.error = stats._3 - stats._2 * stats._2 / stats._1
+		} else {
+			val stats : (Long, Double, Double, Double) = samples.
+				map(sample => (1L, sample(numFeatures - 1),
+						sample(numFeatures - 1) * sample(0),
+						sample(numFeatures - 1) * sample(0) * sample(0))).
+				reduce((stats1, stats2) => (stats1._1 + stats2._1,
+						stats1._2 + stats2._2, stats1._3 + stats2._3,
+						stats1._4 + stats2._4))
+			node.numSamples = stats._1
+			node.weight = stats._2
+			node.response = stats._3 / stats._2
+			node.error = stats._4 - stats._3 * stats._3 / stats._2
+		}
 		
 		var finalTime : Long = System.currentTimeMillis
 		println("        Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
@@ -84,7 +101,6 @@ object SparkRegressionTree {
 		
 		// 3. Find best split for each feature.
 		val numSamples : Long = node.numSamples
-		val numFeatures : Int = featureTypes.length
 		val errorsForFeatures : Array[Double] = new Array(numFeatures)
 		val thresholdsForFeatures : Array[Double] = new Array(numFeatures)
 		val leftValuesForFeatures : Array[Set[Int]]  = new Array(numFeatures)
@@ -157,9 +173,9 @@ object SparkRegressionTree {
 //			collect.toList
 			
 		// Method 2: iterative reduces on mapPartitions + final reduce.
-		val statsForFeatureBins : List[((Int, Int), (Long, Double, Double))] =
+		val statsForFeatureBins : List[((Int, Int), (Double, Double, Double))] =
 			samples.mapPartitions(samplesIterator => {
-				val statsForFeatureBinsMap : MuMap[(Int, Int), (Long, Double, Double)] = MuMap()
+				val statsForFeatureBinsMap : MuMap[(Int, Int), (Double, Double, Double)] = MuMap()
 				while (samplesIterator.hasNext) {
 					val sample : Array[Double] = samplesIterator.next
 					val square : Double = sample(0) * sample(0)
@@ -181,11 +197,23 @@ object SparkRegressionTree {
 							bj = sample(j).toInt
 						}
 						if (statsForFeatureBinsMap.contains((j, bj))) {
-							val oldStats : (Long, Double, Double) = statsForFeatureBinsMap(j, bj)
-							statsForFeatureBinsMap((j, bj)) = (oldStats._1 + 1, oldStats._2 + sample(0),
-									oldStats._3 + square)
+							val oldStats : (Double, Double, Double) = statsForFeatureBinsMap(j, bj)
+							if (useSampleWeights == 0) {
+								statsForFeatureBinsMap((j, bj)) = (oldStats._1 + 1, oldStats._2 + sample(0),
+										oldStats._3 + square)
+							} else {
+								statsForFeatureBinsMap((j, bj)) = (oldStats._1 + sample(numFeatures - 1),
+										oldStats._2 + sample(numFeatures - 1) * sample(0),
+										oldStats._3 + sample(numFeatures - 1) * square)
+							}
 						} else {
-							statsForFeatureBinsMap((j, bj)) = (1L, sample(0), square)
+							if (useSampleWeights == 0) {
+								statsForFeatureBinsMap((j, bj)) = (1L, sample(0), square)
+							} else {
+								statsForFeatureBinsMap((j, bj)) = (sample(numFeatures - 1),
+										sample(numFeatures - 1) * sample(0),
+										sample(numFeatures - 1) * square)
+							}
 						}
 					}
 					// })
@@ -193,7 +221,7 @@ object SparkRegressionTree {
 				Iterator(statsForFeatureBinsMap)
 			}).
 			reduce((map1, map2) => {
-				val merged : MuMap[(Int, Int), (Long, Double, Double)] = map1.clone
+				val merged : MuMap[(Int, Int), (Double, Double, Double)] = map1.clone
 				for (key <- map2.keySet) {
 					if (merged.contains(key)) {
 						merged(key) = (merged(key)._1 + map2(key)._1,
@@ -207,8 +235,8 @@ object SparkRegressionTree {
 			}).toList
 		
 //		// Method 2b: same as 2, use aggregate and combiner functions instead of mapPartitions.
-//		def statsAggregator(statsForFeatureBinsMap : MuMap[(Int, Int), (Long, Double, Double)],
-//					sample : Array[Double]) : MuMap[(Int, Int), (Long, Double, Double)] = {
+//		def statsAggregator(statsForFeatureBinsMap : MuMap[(Int, Int), (Double, Double, Double)],
+//					sample : Array[Double]) : MuMap[(Int, Int), (Double, Double, Double)] = {
 //			val square : Double = sample(0) * sample(0)
 //			// ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 //			for (j <- 1 to numFeatures - 1) {
@@ -228,20 +256,32 @@ object SparkRegressionTree {
 //					bj = sample(j).toInt
 //				}
 //				if (statsForFeatureBinsMap.contains((j, bj))) {
-//					val oldStats : (Long, Double, Double) = statsForFeatureBinsMap(j, bj)
-//					statsForFeatureBinsMap((j, bj)) = (oldStats._1 + 1, oldStats._2 + sample(0),
-//							oldStats._3 + square)
+//					val oldStats : (Double, Double, Double) = statsForFeatureBinsMap(j, bj)
+//					if (useSampleWeights == 0) {
+//						statsForFeatureBinsMap((j, bj)) = (oldStats._1 + 1, oldStats._2 + sample(0),
+//								oldStats._3 + square)
+//					} else {
+//						statsForFeatureBinsMap((j, bj)) = (oldStats._1 + sample(numFeatures - 1),
+//								oldStats._2 + sample(numFeatures - 1) * sample(0),
+//								oldStats._3 + sample(numFeatures - 1) * square)
+//					}
 //				} else {
-//					statsForFeatureBinsMap((j, bj)) = (1L, sample(0), square)
+//					if (useSampleWeights == 0) {
+//						statsForFeatureBinsMap((j, bj)) = (1L, sample(0), square)
+//					} else {
+//						statsForFeatureBinsMap((j, bj)) = (sample(numFeatures - 1),
+//								sample(numFeatures - 1) * sample(0),
+//								sample(numFeatures - 1) * square)
+//					}
 //				}
 //			}
 //			// })
 //			statsForFeatureBinsMap
 //		}
-//		def statsReducer(map1 :  MuMap[(Int, Int), (Long, Double, Double)],
-//				map2 :  MuMap[(Int, Int), (Long, Double, Double)]) :
-//				MuMap[(Int, Int), (Long, Double, Double)] = {
-//			val merged : MuMap[(Int, Int), (Long, Double, Double)] = map1.clone
+//		def statsReducer(map1 :  MuMap[(Int, Int), (Double, Double, Double)],
+//				map2 :  MuMap[(Int, Int), (Double, Double, Double)]) :
+//				MuMap[(Int, Int), (Double, Double, Double)] = {
+//			val merged : MuMap[(Int, Int), (Double, Double, Double)] = map1.clone
 //			for (key <- map2.keySet) {
 //				if (merged.contains(key)) {
 //					merged(key) = (merged(key)._1 + map2(key)._1,
@@ -253,18 +293,18 @@ object SparkRegressionTree {
 //			}
 //			merged
 //		}
-//		val emptyStatsMap : MuMap[(Int, Int), (Long, Double, Double)] = MuMap()
-//		val statsForFeatureBins : List[((Int, Int), (Long, Double, Double))] =
+//		val emptyStatsMap : MuMap[(Int, Int), (Double, Double, Double)] = MuMap()
+//		val statsForFeatureBins : List[((Int, Int), (Double, Double, Double))] =
 //			samples.aggregate(emptyStatsMap)(statsAggregator, statsReducer).toList
 		
 		// 3.3. Separate the histograms, means, and calculate errors.
 		//      Sort bins of discrete features by mean responses.
 		//		Note that we can read in parallel from
 		//		statsForFeatureBins.
-		val statsForBinsForFeatures: Array[List[(Int, Long, Double, Double)]] = new Array(numFeatures)
+		val statsForBinsForFeatures: Array[List[(Int, Double, Double, Double)]] = new Array(numFeatures)
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
-			val statsForBins : List[(Int, Long, Double, Double)] =
+			val statsForBins : List[(Int, Double, Double, Double)] =
 				statsForFeatureBins.filter(_._1._1 == j).
 					map(statsForFeatureBin => (statsForFeatureBin._1._2,
 							statsForFeatureBin._2._1,
@@ -294,44 +334,44 @@ object SparkRegressionTree {
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			
-			val statsForBins : List[(Int, Long, Double, Double)] = statsForBinsForFeatures(j)
+			val statsForBins : List[(Int, Double, Double, Double)] = statsForBinsForFeatures(j)
 			val numBins : Int = statsForBins.length
 			
 			// Initial split and error.
-			var leftNumSamples : Long =  statsForBins(0)._2
+			var leftSumWeight : Double =  statsForBins(0)._2
 			var leftSumResponses : Double = statsForBins(0)._3
 			var leftSumSquares : Double = statsForBins(0)._4
-			var rightNumSamples : Long = 0
+			var rightSumWeight : Double = 0
 			var rightSumResponses : Double = 0
 			var rightSumSquares : Double = 0
 			for (b <- 1 to numBins - 1) {
-				rightNumSamples += statsForBins(b)._2
+				rightSumWeight += statsForBins(b)._2
 				rightSumResponses += statsForBins(b)._3
 				rightSumSquares += statsForBins(b)._4
 			}
 			var bMin : Int = 0
 			var minError : Double = 0
-			if (leftNumSamples != 0) {
-				minError += leftSumSquares - leftSumResponses * leftSumResponses / leftNumSamples
+			if (leftSumWeight != 0) {
+				minError += leftSumSquares - leftSumResponses * leftSumResponses / leftSumWeight
 			}
-			if (rightNumSamples != 0) {
-				minError += rightSumSquares - rightSumResponses * rightSumResponses / rightNumSamples
+			if (rightSumWeight != 0) {
+				minError += rightSumSquares - rightSumResponses * rightSumResponses / rightSumWeight
 			}
 			
 			// Slide threshold from left to right and find best threshold.
 			for (b <- 1 to numBins - 2) {
-				leftNumSamples +=  statsForBins(b)._2
+				leftSumWeight +=  statsForBins(b)._2
 				leftSumResponses += statsForBins(b)._3
 				leftSumSquares += statsForBins(b)._4
-				rightNumSamples -= statsForBins(b)._2
+				rightSumWeight -= statsForBins(b)._2
 				rightSumResponses -= statsForBins(b)._3
 				rightSumSquares -= statsForBins(b)._4
 				var error : Double = 0
-				if (leftNumSamples != 0) {
-					error += leftSumSquares - leftSumResponses * leftSumResponses / leftNumSamples
+				if (leftSumWeight != 0) {
+					error += leftSumSquares - leftSumResponses * leftSumResponses / leftSumWeight
 				}
-				if (rightNumSamples != 0) {
-					error += rightSumSquares - rightSumResponses * rightSumResponses / rightNumSamples
+				if (rightSumWeight != 0) {
+					error += rightSumSquares - rightSumResponses * rightSumResponses / rightSumWeight
 				}
 				if (error < minError) {
 					minError = error
@@ -359,9 +399,13 @@ object SparkRegressionTree {
 		})
 		
 		// 3.5. Find the feature with best split, i.e., maximum weighted gain.
-		var jMax : Int = 1
-		var maxWeightedGain : Double = (node.error - errorsForFeatures(1)) * featureWeights(1)
-		for (j <- 2 to numFeatures - 1) {
+		var jMax : Int = numFeatures - 1
+		var maxWeightedGain : Double = -1
+		if (useSampleWeights == 0) {
+			maxWeightedGain = (node.error - errorsForFeatures(numFeatures - 1)) *
+					featureWeights(numFeatures - 1)
+		}
+		for (j <- 1 to numFeatures - 2) {
 			val weightedGain : Double = (node.error - errorsForFeatures(j)) * featureWeights(j)
 			if (weightedGain > maxWeightedGain) {
 				maxWeightedGain = weightedGain
@@ -418,16 +462,28 @@ object SparkRegressionTree {
 	def trainTree(samples: RDD[Array[Double]], featureTypes : Array[Int],
 			featureWeights : Array[Double],
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
-			minDistributedSamples : Int = 10000) : Node = {
+			minDistributedSamples : Int = 10000, useSampleWeights : Int = 0) : Node = {
 		val rootNode : Node = new Node
 		rootNode.id = 1
 		rootNode.depth = 0
 		// Find initial error to determine minGain.
-		val stats : (Long, Double, Double) = samples.
+		var minGain : Double = 0
+		if (useSampleWeights == 0) {
+			val stats : (Long, Double, Double) = samples.
 				map(sample => (1L, sample(0), sample(0) * sample(0))).
 				reduce((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3))
-		val minGain : Double = minGainFraction * (stats._3 - stats._2 * stats._2 / stats._1)
+			minGain = minGainFraction * (stats._3 - stats._2 * stats._2 / stats._1)
+		} else {
+			val numFeatures : Int = featureTypes.length
+			val stats : (Double, Double, Double) = samples.
+				map(sample => (sample(numFeatures - 1),
+						sample(numFeatures - 1) * sample(0),
+						sample(numFeatures - 1) * sample(0) * sample(0))).
+				reduce((stats1, stats2) => (stats1._1 + stats2._1,
+						stats1._2 + stats2._2, stats1._3 + stats2._3))
+			minGain = minGainFraction * (stats._3 - stats._2 * stats._2 / stats._1)		
+		}
 		// Option 1: Recursive method may cause stack overflow.
 		// findBestSplitRecursive(rootNode)
 		// Option 2: Iterative by maintaining a queue.
@@ -440,7 +496,8 @@ object SparkRegressionTree {
 				println("      Training Node # " + node.id + ".")
 				val (leftSamples, rightSamples) :
 					(RDD[Array[Double]], RDD[Array[Double]]) =
-						trainNode(node, nodeSamples, featureTypes, featureWeights, maxDepth, minGain)
+						trainNode(node, nodeSamples, featureTypes, featureWeights,
+								maxDepth, minGain, useSampleWeights)
 				if (!node.isLeaf) {
 					nodesStack.push((node.rightChild.get, rightSamples))
 					nodesStack.push((node.leftChild.get, leftSamples))
@@ -450,7 +507,8 @@ object SparkRegressionTree {
 				val (leftSamplesList, rightSamplesList) :
 					(List[Array[Double]], List[Array[Double]]) =
 						RegressionTree.trainNode(node, nodeSamples.collect.toList,
-								featureTypes, featureWeights, maxDepth, minGain)
+								featureTypes, featureWeights,
+								maxDepth, minGain, useSampleWeights)
 				if (!node.isLeaf) {
 					val leftSamples : RDD[Array[Double]] = samples.context.parallelize(leftSamplesList, 1)
 					val rightSamples : RDD[Array[Double]] = samples.context.parallelize(rightSamplesList, 1)

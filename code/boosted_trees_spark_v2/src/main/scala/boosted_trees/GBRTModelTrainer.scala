@@ -20,6 +20,7 @@ object GBRTModelTrainer {
 		var shrinkage : Double = 0.8
 		var maxDepth : Int = 4
 		var minGainFraction : Double = 0.01
+		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 
@@ -61,6 +62,9 @@ object GBRTModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--use-sample-weights".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useSampleWeights = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -116,7 +120,8 @@ object GBRTModelTrainer {
 		println("\n  Training forest model.\n")
 		
 		val rootNodes : Array[Node] = GBRT.trainForest(samples, featureTypes,
-				featureWeights, numTrees, shrinkage, maxDepth, minGainFraction)
+				featureWeights, numTrees, shrinkage, maxDepth,
+				minGainFraction, useSampleWeights)
 		
 		
 		// 3. Print and save the tree.
