@@ -97,7 +97,7 @@ training samples using the following files:
         t_2
         ...
         t_{B-1}
-        t_B
+        w_B
 
     Thus, if the file just contains one line, `1`, then it is equivalent
     to the unweighted case. See the weighted data generator programs for using
