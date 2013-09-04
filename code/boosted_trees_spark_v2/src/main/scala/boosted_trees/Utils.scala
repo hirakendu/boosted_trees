@@ -22,6 +22,7 @@ import java.io.File
 import scala.collection.mutable.{Set => MuSet}
 import scala.util.Random
 import scala.io.Source
+import scala.util.Sorting
 
 /**
  * Miscellaneous utility functions.
@@ -103,5 +104,40 @@ object Utils {
 		(new File(dirName)).mkdirs
 	}
 
+	
+	// 4. Function for computing ROC and AUC.
+	
+	def findRocAuc(scoresLabels : List[(Double, Int)]) : (Array[(Double, Double, Double)], Double) = {
+		val sortedScoresLabels : Array[(Double, Int)] = scoresLabels.sort(_._2 < _._2).toArray
+		Sorting.stableSort(sortedScoresLabels, (x : (Double, Int), y : (Double, Int)) => (x._1 > y._1))
+		val numZeros : Double = scoresLabels.filter(_._2 == 0).length
+		val numOnes : Double = scoresLabels.filter(_._2 == 1).length
+		if (numZeros == 0) {
+			return (Array((0.0, 0.0, sortedScoresLabels(0)._1 + 0.1),
+					(0.0, 1.0, sortedScoresLabels(sortedScoresLabels.length - 1)._1 - 0.1),
+					(1.0, 1.0, sortedScoresLabels(sortedScoresLabels.length - 1)._1 - 0.1)), 1.0)
+		}
+		if (numOnes == 0) {
+			return (Array((0.0, 0.0, sortedScoresLabels(0)._1 + 0.1),
+					(0.0, 1.0, sortedScoresLabels(0)._1 + 0.1),
+					(1.0, 1.0, sortedScoresLabels(sortedScoresLabels.length - 1)._1 - 0.1)), 1.0)
+		}
+		val rocPoints : Array[(Double, Double, Double)] = new Array(numZeros.toInt + 2)
+		rocPoints(0) = (0, 0, sortedScoresLabels(0)._1 + 0.1)
+		rocPoints(numZeros.toInt + 1) = (1, 1, sortedScoresLabels(sortedScoresLabels.length - 1)._1 - 0.1)
+		var truePositives : Int = 0
+		var falsePositives : Int = 0
+		for (scoreLabel <- sortedScoresLabels) {
+			if (scoreLabel._2 == 1) {
+				truePositives += 1
+			} else if (scoreLabel._2 == 0) {
+				rocPoints(falsePositives + 1) = (falsePositives / numZeros,
+						truePositives / numOnes, scoreLabel._1)
+				falsePositives += 1
+			}
+		}
+		var auc : Double = rocPoints.map(_._2).drop(1).reduce(_ + _) / numZeros
+		(rocPoints, auc)
+	}
 	
 }

@@ -12,6 +12,7 @@ import spark.SparkContext._
 
 import boosted_trees.Node
 import boosted_trees.RegressionTree
+import boosted_trees.Utils
 
 
 object SparkRegressionTreeErrorAnalyzer {
@@ -28,8 +29,10 @@ object SparkRegressionTreeErrorAnalyzer {
 		var indexedDataFile : String = SparkDefaultParameters.indexedTestDataFile
 		var modelDir : String = SparkDefaultParameters.treeModelDir
 		var errorFile : String = modelDir + "/error.txt"
+		var rocFile : String = modelDir + "/roc.txt"
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
+		var maxNumRocSamples : Int = 100000
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		var cacheIndexedData : Int = 0
@@ -78,12 +81,18 @@ object SparkRegressionTreeErrorAnalyzer {
 			} else if (("--error-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				errorFile = xargs(argi)
+			} else if (("--roc-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				rocFile = xargs(argi)
 			} else if (("--binary-mode".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				binaryMode = xargs(argi).toInt
 			} else if (("--threshold".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				threshold = xargs(argi).toDouble
+			} else if (("--max-num-roc-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				maxNumRocSamples = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -181,7 +190,23 @@ object SparkRegressionTreeErrorAnalyzer {
 						stats1._4 + stats2._4))
 		}
 		
-		// 3. Save error statistics.
+		
+		// 3. Calculate AUC for binary case.
+		
+		var roc : Array[(Double, Double, Double)] = null
+		var auc : Double = 0
+		if (binaryMode == 1) {
+			val numRocSamples : Int = Math.min(maxNumRocSamples, testSamples.count).toInt
+			val rocSamples : List[Array[Double]] = testSamples.takeSample(false, numRocSamples, 42).toList
+			val scoresLabels : List[(Double, Int)] = rocSamples.map(testSample => 
+					(RegressionTree.predict(testSample, rootNode), testSample(0).toInt))
+			val rocAuc = Utils.findRocAuc(scoresLabels)
+			roc = rocAuc._1
+			auc = rocAuc._2
+		}
+		
+		
+		// 4. Save error statistics.
 		
 		println("\n  Saving error statistics.\n")
 		
@@ -199,6 +224,7 @@ object SparkRegressionTreeErrorAnalyzer {
 					"%.3f".format(tp.toDouble / (tp + fp))
 			lines += "F1 = " +  "%.3f".format(2 * tp.toDouble / (2 * tp + fn + fp))
 			lines += "A = " + "%.3f".format((tn + tp).toDouble / (tn + tp + fn + fp))
+			lines += "AUC = " + "%.3f".format(auc)
 		}
 		lines += "RMSE = " + "%.3f".format(math.sqrt(errorStats._2 / errorStats._1))
 		lines += "MAE = " + "%.3f".format(errorStats._3 / errorStats._1)
@@ -206,6 +232,9 @@ object SparkRegressionTreeErrorAnalyzer {
 		lines += "Trivial RMSE = " + "%.3f".format(math.sqrt(trivialErrorStats._2 / trivialErrorStats._1))
 		lines += "Trivial MAE = " + "%.3f".format(trivialErrorStats._3 / trivialErrorStats._1)
 		sc.parallelize(lines, 1).saveAsTextFile(errorFile)
+		sc.parallelize(roc.map(x => "%.3f".format(x._1) + "\t" +
+						"%.3f".format(x._2) + "\t" + "%.3f".format(x._3)), 1).
+						saveAsTextFile(rocFile)
 		
 	}
 

@@ -220,6 +220,13 @@ For examples, we assume that the `${JARS}` folder contains
     case, indexing is performed using same indexes as train data before prediction.
     Reads tree model from `${WORK}/tree/tree.txt`.
     The output errors are saved to `${WORK}/tree/error.txt`.
+    When binary mode is enabled, predictions are 0 or 1 based on whether the
+    scores are lower or higher than specified threshold. In this case,
+    additional error statistics like TPR, FPR, AUC are printed to `error.txt`.
+    In addition, `(FPR, TPR)` points for ROC are printed to
+    `${WORK}/tree/roc.txt` along with corresponding thresholds.
+    This can be plotted, say using the provided python script
+    [roc_plot.py](scripts/roc_plot.py) as `python roc_plot.py roc.txt roc.pdf`.
 
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeErrorAnalyzer \
@@ -229,8 +236,10 @@ For examples, we assume that the `${JARS}` folder contains
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
           --model-dir ${WORK}/tree/ \
           --error-file ${WORK}/tree/error.txt \
+          --roc-file ${WORK}/tree/roc.txt \
           --binary-mode 0 \
           --threshold 0.5 \
+          --max-num-roc-samples 100000 \
           --use-indexed-data 0 \
           --save-indexed-data 0
         
@@ -289,8 +298,10 @@ For examples, we assume that the `${JARS}` folder contains
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
           --model-dir ${WORK}/forest/ \
           --error-file ${WORK}/forest/error.txt \
+          --roc-file ${WORK}/forest/roc.txt \
           --binary-mode 0 \
           --threshold 0.5 \
+          --max-num-roc-samples 100000 \
           --use-indexed-data 0 \
           --save-indexed-data 0
          
@@ -483,8 +494,10 @@ are provided below. For examples of the same on Yarn cluster using
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/tree/^\
         --error-file^${DIST_WORK}/tree/error.txt^\
+        --roc-file^${DIST_WORK}/forest/roc.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
+        --max-num-roc-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0 \
           2>spark_log.txt
@@ -527,8 +540,10 @@ are provided below. For examples of the same on Yarn cluster using
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/forest/^\
         --error-file^${DIST_WORK}/forest/error.txt^\
+        --roc-file^${DIST_WORK}/forest/roc.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
+        --max-num-roc-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0 \
           2>spark_log.txt

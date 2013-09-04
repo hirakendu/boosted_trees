@@ -138,8 +138,10 @@ are provided below.
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/tree/^\
         --error-file^${DIST_WORK}/tree/error.txt^\
+        --roc-file^${DIST_WORK}/forest/roc.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
+        --max-num-roc-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0
      
@@ -192,7 +194,9 @@ are provided below.
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/forest/^\
         --error-file^${DIST_WORK}/forest/error.txt^\
+        --roc-file^${DIST_WORK}/forest/roc.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
+        --max-num-roc-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0
