@@ -27,9 +27,9 @@ import scala.collection.mutable.Stack
 import scala.collection.parallel.immutable.ParSeq
 import scala.util.control.Breaks._
 
-import spark.RDD
-import spark.SparkContext
-import spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
 
 import boosted_trees.Utils
 import boosted_trees.Node

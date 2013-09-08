@@ -19,6 +19,7 @@
 			<excludes>
 				<!-- All these should be provided by Spark runtime environment. -->
 				<exclude>org.scala-lang:scala-library</exclude>
+				<exclude>org.apache.spark:*</exclude>
 				<exclude>org.spark-project:*</exclude>
 				<exclude>org.apache.hadoop:*</exclude>
 				<exclude>org.apache.hbase:hbase</exclude>

@@ -15,7 +15,8 @@ object DataIndexer {
 		var dataFile : String = DefaultParameters.trainDataFile
 		var indexesDir : String = DefaultParameters.indexesDir
 		var indexedDataFile : String = DefaultParameters.indexedTrainDataFile
-		var saveIndexedData : Int = 1
+		var generateIndexes : Int = 1
+		var encodeData : Int = 1
 
 		// 0.1. Read parameters.
 		
@@ -37,9 +38,12 @@ object DataIndexer {
 			} else if (("--indexed-data-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				indexedDataFile = xargs(argi)
-			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--generate-indexes".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				saveIndexedData = xargs(argi).toInt
+				generateIndexes = xargs(argi).toInt
+			} else if (("--encode-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				encodeData = xargs(argi).toInt
 			} else {
 				println("\n  Error parsing argument \"" + xargs(argi) +
 						"\".\n")
@@ -62,12 +66,18 @@ object DataIndexer {
 		// val rawSamples : List[String] = Source.fromFile(new File(dataFile)).getLines.toArray.toList
 		
 		// 1.3. Index categorical features/fields and save indexes.
-		val indexes :  Array[Map[String,Int]] =
-			Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
-		Indexing.saveIndexes(indexesDir, features, indexes)
+		println("\n  Generating/reading indexes.\n")
+		var indexes :  Array[Map[String,Int]] = null
+		if (generateIndexes == 1) {
+			indexes = Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
+			Indexing.saveIndexes(indexesDir, features, indexes)
+		} else {
+			indexes = Indexing.readIndexes(indexesDir, features)
+		}	
 		
 		// 1.4. Encode data and save indexed data.
-		if (saveIndexedData == 1) {
+		if (encodeData == 1) {
+			println("\n  Encoding data.\n")
 			val samples : List[Array[Double]] =
 					Indexing.indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
 			Indexing.saveIndexedData(indexedDataFile, samples, featureTypes)

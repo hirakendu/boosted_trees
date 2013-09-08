@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -z "${SPARK_HOME}" ]; then
-	export SPARK_HOME="${HOME}/Applications/spark-0.8"
+	export SPARK_HOME="${HOME}/opt/spark"
 fi
 
 cd ${SPARK_HOME}

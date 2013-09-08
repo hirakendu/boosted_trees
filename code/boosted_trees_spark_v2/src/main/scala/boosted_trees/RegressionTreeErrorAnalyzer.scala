@@ -175,20 +175,20 @@ object RegressionTreeErrorAnalyzer {
 			val tp : Long =  binaryErrorStats._3 - fn
 			val tn : Long =  binaryErrorStats._1 - fp
 			lines += "TPR = Recall = " + tp + "/" + (tp + fn) + " = " +
-					"%.3f".format(tp.toDouble / (tp + fn))
+					"%.5f".format(tp.toDouble / (tp + fn))
 			lines += "FPR = " + fp + "/" + (tn + fp) + " = " +
-					"%.3f".format(fp.toDouble / (tn + fp))
+					"%.5f".format(fp.toDouble / (tn + fp))
 			lines += "Precision = " + tp + "/" + (tp + fp) + " = " +
-					"%.3f".format(tp.toDouble / (tp + fp))
-			lines += "F1 = " +  "%.3f".format(2 * tp.toDouble / (2 * tp + fn + fp))
-			lines += "A = " + "%.3f".format((tn + tp).toDouble / (tn + tp + fn + fp))
-			lines += "AUC = " + "%.3f".format(auc)
+					"%.5f".format(tp.toDouble / (tp + fp))
+			lines += "F1 = " +  "%.5f".format(2 * tp.toDouble / (2 * tp + fn + fp))
+			lines += "A = " + "%.5f".format((tn + tp).toDouble / (tn + tp + fn + fp))
+			lines += "AUC = " + "%.5f".format(auc)
 		}
-		lines += "RMSE = " + "%.3f".format(math.sqrt(errorStats._2 / errorStats._1))
-		lines += "MAE = " + "%.3f".format(errorStats._3 / errorStats._1)
-		lines += "Trivial response = " + "%.3f".format(trivialResponse)
-		lines += "Trivial RMSE = " + "%.3f".format(math.sqrt(trivialErrorStats._2 / trivialErrorStats._1))
-		lines += "Trivial MAE = " + "%.3f".format(trivialErrorStats._3 / trivialErrorStats._1)
+		lines += "RMSE = " + "%.5f".format(math.sqrt(errorStats._2 / errorStats._1))
+		lines += "MAE = " + "%.5f".format(errorStats._3 / errorStats._1)
+		lines += "Trivial response = " + "%.5f".format(trivialResponse)
+		lines += "Trivial RMSE = " + "%.5f".format(math.sqrt(trivialErrorStats._2 / trivialErrorStats._1))
+		lines += "Trivial MAE = " + "%.5f".format(trivialErrorStats._3 / trivialErrorStats._1)
 		Utils.createParentDirs(errorFile)
 		var printWriter : PrintWriter = new PrintWriter(new File(errorFile))
 		for (line <- lines) {
@@ -197,9 +197,9 @@ object RegressionTreeErrorAnalyzer {
 		printWriter.close
 		if (binaryMode == 1) {
 			printWriter = new PrintWriter(new File(rocFile))
-			printWriter.println(roc.map(x => "%.3f".format(x._1) + "\t" +
-						"%.3f".format(x._2) + "\t" +
-						"%.3f".format(x._3)).mkString("\n"))
+			printWriter.println(roc.map(x => "%.5f".format(x._1) + "\t" +
+						"%.5f".format(x._2) + "\t" +
+						"%.5f".format(x._3)).mkString("\n"))
 			printWriter.close
 		}
 		

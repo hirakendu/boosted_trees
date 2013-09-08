@@ -10,7 +10,6 @@ object SparkDefaultParameters {
 	
 	// SparkDataSampler.
 	val sampleDataFile : String = workDir + "/sample_data.txt"
-	val sampleRate : Double = 0.01
 	
 	// SparkTrainTestSplitter.
 	val dataFile : String = workDir + "/data.txt"

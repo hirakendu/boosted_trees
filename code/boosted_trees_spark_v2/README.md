@@ -150,6 +150,7 @@ For examples, we assume that the `${JARS}` folder contains
     `<feature_name>$`, it generates an index file
     `${WORK}/indexing/indexes/<feature_name>_index.txt`.
     The encoded train data is `${WORK}/indexing/indexed_train_data.txt`.
+    Use options to re-use existing indexes and/or skip encoding data.
 
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.DataIndexer \
@@ -157,7 +158,8 @@ For examples, we assume that the `${JARS}` folder contains
           --data-file ${WORK}/split/train_data.txt \
           --indexes-dir ${WORK}/indexing/indexes/ \
           --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
-          --save-indexed-data 1
+          --generate-indexes 1 \
+          --encode-data 1
      
  5. **Weighted data generator**: generates a dataset with weights attached
     to training samples using a given training dataset and a weight-steps file.
@@ -446,7 +448,8 @@ are provided below. For examples of the same on Yarn cluster using
         --data-file^${DIST_WORK}/split/train_data.txt^\
         --indexes-dir^${DIST_WORK}/indexing/indexes/^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
-        --save-indexed-data^1 \
+        --generate-indexes^1^\
+        --encode-data^1 \
           2>spark_log.txt
      
  5. **Weighted data generator**:
@@ -494,7 +497,7 @@ are provided below. For examples of the same on Yarn cluster using
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/tree/^\
         --error-file^${DIST_WORK}/tree/error.txt^\
-        --roc-file^${DIST_WORK}/forest/roc.txt^\
+        --roc-file^${DIST_WORK}/tree/roc.txt^\
         --binary-mode^0^\
         --threshold^0.5^\
         --max-num-roc-samples^100000^\

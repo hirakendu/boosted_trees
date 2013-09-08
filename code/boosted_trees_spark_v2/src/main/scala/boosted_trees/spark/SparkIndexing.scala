@@ -20,9 +20,9 @@ package boosted_trees.spark
 import scala.collection.parallel.immutable.ParSeq
 import scala.collection.mutable.{Set => MuSet}
 
-import spark.RDD
-import spark.SparkContext
-import spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
 
 import boosted_trees.Indexing
 

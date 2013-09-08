@@ -1,8 +1,8 @@
 package boosted_trees.spark
 
-import spark.RDD
-import spark.SparkContext
-import spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
 
 import scala.collection.mutable.MutableList
 
@@ -15,7 +15,7 @@ object SparkBinaryDataGenerator {
 		var sparkMaster : String = SparkDefaultParameters.sparkMaster
 		var sparkHome : String = SparkDefaultParameters.sparkHome
 		var sparkAppJars : String = SparkDefaultParameters.sparkAppJars
-		var dataFile : String = SparkDefaultParameters.trainDataFile
+		var dataFile : String = SparkDefaultParameters.dataFile
 		var binaryDataFile : String = SparkDefaultParameters.binaryDataFile
 		var threshold : Double = 0.5
 

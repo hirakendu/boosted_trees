@@ -4,7 +4,7 @@ import java.io.File
 
 import scala.io.Source
 
-import spark.SparkContext
+import org.apache.spark.SparkContext
 
 object SparkUtils {
 	

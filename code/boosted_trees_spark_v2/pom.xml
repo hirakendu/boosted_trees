@@ -9,7 +9,7 @@
 
 	<properties>
 		<spark.version>0.8.0-SNAPSHOT</spark.version>
-		<yarn.version>0.23.8</yarn.version>
+		<hadoop.version>0.23.8</hadoop.version>
 	</properties>
 
 	<dependencies>
@@ -20,31 +20,29 @@
 		</dependency>
 		<!-- Spark/Yarn related dependencies, taken from spark-examples POM. -->
 		<dependency>
-			<groupId>org.spark-project</groupId>
+			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-core</artifactId>
 			<version>${spark.version}</version>
-			<classifier>hadoop2-yarn</classifier>
 		</dependency>
 		<dependency>
-			<groupId>org.spark-project</groupId>
+			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-streaming</artifactId>
 			<version>${spark.version}</version>
-			<classifier>hadoop2-yarn</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>${yarn.version}</version>
+			<version>${hadoop.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-yarn-api</artifactId>
-			<version>${yarn.version}</version>
+			<version>${hadoop.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-yarn-common</artifactId>
-			<version>${yarn.version}</version>
+			<version>${hadoop.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hbase</groupId>

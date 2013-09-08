@@ -1,8 +1,8 @@
 package boosted_trees.spark
 
-import spark.RDD
-import spark.SparkContext
-import spark.SparkContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
 
 
 object SparkDataIndexer {
@@ -17,7 +17,8 @@ object SparkDataIndexer {
 		var dataFile : String = SparkDefaultParameters.trainDataFile
 		var indexesDir : String = SparkDefaultParameters.indexesDir
 		var indexedDataFile : String = SparkDefaultParameters.indexedTrainDataFile
-		var saveIndexedData : Int = 1
+		var generateIndexes : Int = 1
+		var encodeData : Int = 1
 
 		// 0.1. Read parameters.
 			
@@ -57,9 +58,12 @@ object SparkDataIndexer {
 			} else if (("--indexed-data-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				indexedDataFile = xargs(argi)
-			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			}  else if (("--generate-indexes".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				saveIndexedData = xargs(argi).toInt
+				generateIndexes = xargs(argi).toInt
+			} else if (("--encode-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				encodeData = xargs(argi).toInt
 			} else {
 				println("\n  Error parsing argument \"" + xargs(argi) +
 						"\".\n")
@@ -79,8 +83,6 @@ object SparkDataIndexer {
 		
 		// 1. Read input data and index it.
 		
-		println("\n  Reading and indexing data.\n")
-		
 		// 1.1. Read header.
 		
 		val features : Array[String] = SparkUtils.readSmallFile(sc, headerFile)
@@ -92,11 +94,18 @@ object SparkDataIndexer {
 		val rawSamples : RDD[String] = sc.textFile(dataFile)
 			
 		// 1.3. Index categorical features/fields and save indexes.
-		val indexes :  Array[Map[String,Int]] = SparkIndexing.generateIndexes(rawSamples, featureTypes)
-		SparkIndexing.saveIndexes(sc, indexesDir, features, indexes)
+		println("\n  Generating/reading indexes.\n")
+		var indexes :  Array[Map[String,Int]] = null
+		if (generateIndexes == 1) {
+			indexes = SparkIndexing.generateIndexes(rawSamples, featureTypes)
+			SparkIndexing.saveIndexes(sc, indexesDir, features, indexes)
+		} else {
+			indexes = SparkIndexing.readIndexes(sc, indexesDir, features)
+		}
 		
 		// 1.4. Encode data and save indexed data.
-		if (saveIndexedData == 1) {
+		if (encodeData == 1) {
+			println("\n  Encoding data.\n")
 			val samples : RDD[Array[Double]] = SparkIndexing.indexRawData(rawSamples, featureTypes, indexes)
 			SparkIndexing.saveIndexedData(indexedDataFile, samples, featureTypes)
 		}
