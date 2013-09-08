@@ -35,3 +35,5 @@ export SPARK_CLASSPATH="${SPARK_CLASSPATH}:${SPARK_JAR}"
 cd ${SPARK_HOME}
 # ./run spark.deploy.yarn.Client $@  # old
 ./spark-class org.apache.spark.deploy.yarn.Client $@
+# ${JAVA_HOME}/bin/java -cp ${SPARK_JAR}:${HADOOP_CONF_DIR} -Xms512m -Xms512m \
+# 	spark.deploy.yarn.Client $@

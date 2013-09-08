@@ -5,6 +5,7 @@ object SparkDefaultParameters {
 	// General.
 	val sparkMaster : String = "local[2]"
 	val sparkHome : String = "/opt/spark"
+	val sparkAppName : String = "Spark Boosted Trees"
 	val sparkAppJars : String = null // "boosted_trees_spark-spark.jar"
 	val workDir : String = "file://" + System.getenv("HOME") + "/temp/boosted_trees_work"
 	

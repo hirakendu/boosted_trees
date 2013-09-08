@@ -75,7 +75,8 @@ are provided below.
         --data-file^${DIST_WORK}/split/train_data.txt^\
         --indexes-dir^${DIST_WORK}/indexing/indexes/^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
-        --save-indexed-data^1
+        --generate-indexes^1^\
+        --encode-data^1
      
  5. **Weighted data generator**:
 

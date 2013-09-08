@@ -16,6 +16,7 @@ object SparkGBRTModelTrainer {
 		// 0.0. Default parameters.
 		var sparkMaster : String = SparkDefaultParameters.sparkMaster
 		var sparkHome : String = SparkDefaultParameters.sparkHome
+		val sparkAppName : String = SparkDefaultParameters.sparkAppName
 		var sparkAppJars : String = SparkDefaultParameters.sparkAppJars
 		var headerFile : String = SparkDefaultParameters.headerFile
 		var featureWeightsFile : String = ""
@@ -129,7 +130,7 @@ object SparkGBRTModelTrainer {
 		if (sparkAppJars != null) {
 			sparkAppJarsSeq = sparkAppJars.split(",").toSeq
 		}
-		val sc : SparkContext = new SparkContext(sparkMaster, "Spark Regression Tree",
+		val sc : SparkContext = new SparkContext(sparkMaster, sparkAppName,
 				sparkHome, sparkAppJarsSeq)
 		
 		
