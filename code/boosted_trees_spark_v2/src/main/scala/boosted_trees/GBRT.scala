@@ -167,7 +167,7 @@ object GBRT {
 	def printForestDot(treesDir : String, rootNodes : Array[Node], features : Array[String]) : Unit = {
 		(new File(treesDir)).mkdirs
 		for (m <- 0 to rootNodes.length - 1) {
-			RegressionTree.printTreeDot(treesDir + "/tree_" + m + "_details.dot", rootNodes(m), features)
+			RegressionTree.printTreeDot(treesDir + "/tree_" + m + ".dot", rootNodes(m), features)
 		}
 	}
 	
