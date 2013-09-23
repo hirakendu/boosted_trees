@@ -150,7 +150,7 @@ object Indexing {
 		for (j <- 1 to featureTypes.length - 1) {
 			if (featureTypes(j) == 0) {
 				if ("".equals(rawValues(j))) {
-					sample(j) = 1.0
+					sample(j) = -1.0
 				} else {
 					sample(j) = rawValues(j).toDouble
 				}

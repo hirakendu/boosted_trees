@@ -78,7 +78,7 @@ object FeatureWeightsGenerator {
 		
 		Utils.createParentDirs(featureWeightsFile)
 		val printWriter : PrintWriter = new PrintWriter(new File(featureWeightsFile))
-		printWriter.print(featureWeights.mkString("\n"))
+		printWriter.println(featureWeights.mkString("\n"))
 		printWriter.close
 		
 	}

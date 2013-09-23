@@ -390,7 +390,7 @@ object RegressionTree {
 		// Option 1: Recursive method may cause stack overflow.
 		// findBestSplitRecursive(rootNode)
 		// Option 2: Iterative by maintaining a queue.
-		var nodesStack : Stack[(Node,  List[Array[Double]])] = Stack()
+		val nodesStack : Stack[(Node,  List[Array[Double]])] = Stack()
 		nodesStack.push((rootNode, samples))
 		while (!nodesStack.isEmpty) {
 			val (node, nodeSamples) : (Node,  List[Array[Double]]) = nodesStack.pop
@@ -450,34 +450,56 @@ object RegressionTree {
 	}
 	
 	
-	// 3. Function for finding feature importances.
+	// 3. Function for finding feature gains.
 	
-	def evaluateFeatureImportances(rootNode : Node, numFeatures : Int) : Array[Double] = {
-		val featureImportances : Array[Double] = new Array(numFeatures + 1)
-		var nodesStack : Stack[Node] = Stack()
+	def evaluateFeatureGains(rootNode : Node, numFeatures : Int) : Array[Double] = {
+		val featureGains : Array[Double] = new Array(numFeatures + 1)
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			val node : Node = nodesStack.pop
 			if (!node.isLeaf) {
-				featureImportances(node.featureId) += node.gain
+				featureGains(node.featureId) += node.gain
 				nodesStack.push(node.rightChild.get)
 				nodesStack.push(node.leftChild.get)
 			}
 		}
-		var maxGain : Double = 0
-		for (j <- 1 to numFeatures) {
-			if (featureImportances(j) > maxGain) {
-				maxGain = featureImportances(j)
+		// val maxGain = featureGains.max
+		// featureGains.map(_ * 100 / maxGain)
+		featureGains
+	}
+	
+	// 3.1. Evaluate feature subset gains.
+	
+	def evaluateFeatureSubsetGains(rootNode : Node) : List[(Set[Int], Double)] = {
+		val featureSubsetNodes : MuMap[Set[Int], MuSet[Node]] = MuMap()
+		val nodesStack : Stack[Node] = Stack()
+		nodesStack.push(rootNode)
+		while (!nodesStack.isEmpty) {
+			val node : Node = nodesStack.pop
+			val featureSubset : MuSet[Int] = MuSet()
+			val nodes : MuSet[Node] = MuSet()
+			var parentNode : Option[Node] = node.parent
+			while (!parentNode.isEmpty) {
+				featureSubset += parentNode.get.featureId
+				nodes += parentNode.get
+				if (!featureSubsetNodes.contains(featureSubset.toSet)) {
+					featureSubsetNodes(featureSubset.toSet) = MuSet()
+				}
+				featureSubsetNodes(featureSubset.toSet) ++= nodes
+				parentNode = parentNode.get.parent
+			}
+			if (!node.isLeaf) {
+				nodesStack.push(node.rightChild.get)
+				nodesStack.push(node.leftChild.get)
 			}
 		}
-		for (j <- 1 to numFeatures) {
-			if (maxGain > 0) {
-				featureImportances(j) = featureImportances(j) * 100 / maxGain
-			} else {
-				featureImportances(j) = 100
-			}
-		}
-		featureImportances
+		val featureSubsetGains : List[(Set[Int], Double)] =
+			featureSubsetNodes.toList.map(x => (x._1, x._2.map(_.gain).sum)).
+			sort(_._2 > _._2)
+		// val maxGain : Double = featureSubsetGains.map(_._2).max
+		// featureSubsetGains.map(x => (x._1, x._2 * 100 / maxGain))
+		featureSubsetGains
 	}
 	
 	
@@ -487,7 +509,7 @@ object RegressionTree {
 	
 	def saveTree(rootNode : Node) : List[String] = {
 		val lines : MutableList[String] = MutableList()
-		var nodesStack : Stack[Node] = Stack()
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			// Save head of stack.
@@ -587,7 +609,7 @@ object RegressionTree {
 	
 	def printTree(rootNode : Node) : List[String] = {
 		val lines : MutableList[String] = MutableList()
-		var nodesStack : Stack[Node] = Stack()
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			var node : Node = nodesStack.pop
@@ -609,7 +631,7 @@ object RegressionTree {
 			}
 		}
 		val lines : MutableList[String] = MutableList()
-		var nodesStack : Stack[Node] = Stack()
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			var node : Node = nodesStack.pop
@@ -714,7 +736,7 @@ object RegressionTree {
 			}
 		}
 		val nodesDetails : MutableList[(Int, String)] = MutableList()
-		var nodesStack : Stack[Node] = Stack()
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			val node : Node = nodesStack.pop
@@ -744,7 +766,7 @@ object RegressionTree {
 		val printWriter : PrintWriter = new PrintWriter(new File(treeFile))
 		printWriter.println("digraph regression_tree {")
 		// Print node information.
-		var nodesStack : Stack[Node] = Stack()
+		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
 		while (!nodesStack.isEmpty) {
 			// Print head.

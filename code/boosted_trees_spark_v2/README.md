@@ -248,7 +248,9 @@ For examples, we assume that the `${JARS}` folder contains
  9. **Regression tree details printer**: prints detailed information
     about a tree model. Reads model from `${WORK}/tree/nodes.txt`
     and prints details to `${WORK}/tree/tree_details.txt`
-    and `${WORK}/tree/nodes_details/`.
+    and `${WORK}/tree/nodes_details/`. Also prints feature importances
+    to `${WORK}/tree/feature_importances.txt` and
+    `${WORK}/tree/feature_subset_importances.txt`.
  
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeDetailsPrinter \

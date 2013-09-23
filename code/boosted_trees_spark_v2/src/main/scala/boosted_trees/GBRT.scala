@@ -22,6 +22,7 @@ import java.io.PrintWriter
 
 import scala.io.Source
 import scala.collection.mutable.Stack
+import scala.collection.mutable.{Map => MuMap}
 
 /**
  * Functions for training a GBRT model, i.e., a forest
@@ -113,23 +114,45 @@ object GBRT {
 		return b
 	}
 	
-	// 3. Function for finding feature importances.
+	// 3. Function for finding feature gains.
 	
-	def evaluateFeatureImportances(rootNodes : Array[Node], numFeatures : Int) : Array[Double] = {
-		val featureImportances : Array[Double] = new Array(numFeatures + 1)
+	def evaluateFeatureGains(rootNodes : Array[Node], numFeatures : Int) : Array[Double] = {
+		val featureGains : Array[Double] = new Array(numFeatures + 1)
 		for (m <- 0 to rootNodes.length - 1) {
-			val treeFeatureImportances : Array[Double] =
-				RegressionTree.evaluateFeatureImportances(rootNodes(m), numFeatures)
+			val treeFeatureGains : Array[Double] =
+				RegressionTree.evaluateFeatureGains(rootNodes(m), numFeatures)
 			for (j <- 1 to numFeatures) {
-				featureImportances(j) += treeFeatureImportances(j)
+				featureGains(j) += treeFeatureGains(j)
 			}
 		}
 		for (j <- 1 to numFeatures) {
-			featureImportances(j) /= rootNodes.length
+			featureGains(j) /= rootNodes.length
 		}
-		featureImportances
+		// val maxGain : Double = featureGains.max
+		// featureGains.map(_ * 100 / maxGain)
+		featureGains
 	}
 	
+	// 3.1. Evaluate feature subset gains.
+	
+	def evaluateFeatureSubsetGains(rootNodes : Array[Node]) : List[(Set[Int], Double)] = {
+		val subsetGains : MuMap[Set[Int], Double] = MuMap()
+		for (m <- 0 to rootNodes.length - 1) {
+			val treeSubsetGains :  Map[Set[Int], Double] =
+				RegressionTree.evaluateFeatureSubsetGains(rootNodes(m)).toMap
+			for (subset <- treeSubsetGains.keySet) {
+				if (subsetGains.contains(subset)) {
+					subsetGains(subset) = subsetGains(subset) +
+						treeSubsetGains(subset)	
+				} else {
+					subsetGains(subset) = treeSubsetGains(subset)
+				}
+			}
+		}
+		// val maxGain : Double =  subsetGains.toList.map(_._2).max
+		// subsetGains.toList.sort(_._2 > _._2).map(x => (x._1, x._2 * 100 / maxGain))
+		subsetGains.toList.sort(_._2 > _._2)
+	}
 	
 	// 4. Functions for saving and printing a forest model.
 	

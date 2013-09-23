@@ -65,13 +65,26 @@ object RegressionTreeDetailsPrinter {
 		RegressionTree.printTree(modelDir + "/tree_details.txt", rootNode, features, indexes)
 		RegressionTree.printTreeDetails(modelDir + "/nodes_details/", rootNode, features, indexes)
 		
+		val featureGains : Array[Double] = RegressionTree.evaluateFeatureGains(rootNode, numFeatures)
+		var maxGain : Double = featureGains.max
 		val featureImportances : List[String] = features.
-			zip(RegressionTree.evaluateFeatureImportances(rootNode, numFeatures)).
+			zip(featureGains.map(_ * 100 / maxGain)).
 			drop(1).  // Drop the label feature
 			toList.sort(_._2 > _._2).
 			map(featureImportance => featureImportance._1 + "\t" + "%.1f".format(featureImportance._2))
-		val printWriter : PrintWriter = new PrintWriter(new File(modelDir + "/feature_importances.txt"))
+		var printWriter : PrintWriter = new PrintWriter(new File(modelDir + "/feature_importances.txt"))
 		printWriter.println(featureImportances.mkString("\n"))
+		printWriter.close
+		
+		
+		val featureSubsetGains : List[(Set[Int], Double)] =
+				RegressionTree.evaluateFeatureSubsetGains(rootNode)
+		maxGain = featureSubsetGains.map(_._2).max
+		val featureSubsetImportances : List[String] =
+			featureSubsetGains.map(x => x._1.map(features(_)).mkString(",") +
+					"\t" + "%.1f".format(x._2 * 100 / maxGain))
+		printWriter = new PrintWriter(new File(modelDir + "/feature_subset_importances.txt"))
+		printWriter.println(featureSubsetImportances.mkString("\n"))
 		printWriter.close
 		
 	}
