@@ -73,7 +73,7 @@ are provided below.
         --spark-master^yarn-standalone^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
         --generate-indexes^1^\
         --encode-data^1
@@ -110,16 +110,18 @@ are provided below.
         --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
-        --model-dir^${DIST_WORK}/tree/^\
+        --model-dir^${DIST_WORK}/tree^\
         --max-depth^5^\
         --min-gain-fraction^0.01^\
+        --min-local-gain-fraction^1^\
         --min-distributed-samples^10000^\
         --use-sample-weights^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0
+        --cache-indexed-data^0^\
+        --use-arrays^0
      
  7. **Regression tree error analyzer**:
 
@@ -135,14 +137,13 @@ are provided below.
         --spark-master^yarn-standalone^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/test_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
-        --model-dir^${DIST_WORK}/tree/^\
-        --error-file^${DIST_WORK}/tree/error.txt^\
-        --roc-file^${DIST_WORK}/tree/roc.txt^\
+        --model-dir^${DIST_WORK}/tree^\
+        --error-dir^${DIST_WORK}/tree^\
         --binary-mode^0^\
         --threshold^0.5^\
-        --max-num-roc-samples^100000^\
+        --max-num-summary-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0
      
@@ -161,21 +162,23 @@ are provided below.
         --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
         --residual-data-file^${DIST_WORK}/indexing/residual_data.txt^\
-        --model-dir^${DIST_WORK}/forest/^\
+        --model-dir^${DIST_WORK}/forest^\
         --num-trees^5^\
         --shrinkage^0.8^\
         --max-depth^4^\
         --min-gain-fraction^0.01^\
+        --min-local-gain-fraction^1^\
         --min-distributed-samples^10000^\
         --use-sample-weights^0^\
         --initial-num-trees^0^\
         --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0
+        --cache-indexed-data^0^\
+        --use-arrays^0 \
      
  9. **GBRT error analyzer**:
 
@@ -191,13 +194,12 @@ are provided below.
         --spark-master^yarn-standalone^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/test_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
-        --model-dir^${DIST_WORK}/forest/^\
-        --error-file^${DIST_WORK}/forest/error.txt^\
-        --roc-file^${DIST_WORK}/forest/roc.txt^\
+        --model-dir^${DIST_WORK}/forest^\
+        --error-dir^${DIST_WORK}/forest^\
         --binary-mode^0^\
         --threshold^0.5^\
-        --max-num-roc-samples^100000^\
+        --max-num-summary-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0

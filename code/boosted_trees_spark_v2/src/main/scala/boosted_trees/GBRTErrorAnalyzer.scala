@@ -18,11 +18,10 @@ object GBRTErrorAnalyzer {
 		var indexesDir : String = DefaultParameters.indexesDir
 		var indexedDataFile : String = DefaultParameters.indexedTestDataFile
 		var modelDir : String = DefaultParameters.forestModelDir
-		var errorFile : String = modelDir + "/error.txt"
-		var rocFile : String = modelDir + "/roc.txt"
+		var errorDir : String = modelDir
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
-		var maxNumRocSamples : Int = 100000
+		var maxNumSummarySamples : Int = 100000
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		
@@ -49,21 +48,18 @@ object GBRTErrorAnalyzer {
 			} else if (("--model-dir".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				modelDir = xargs(argi)
-			} else if (("--error-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--error-dir".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				errorFile = xargs(argi)
-			} else if (("--roc-file".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
-				argi += 1
-				rocFile = xargs(argi)
+				errorDir = xargs(argi)
 			} else if (("--binary-mode".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				binaryMode = xargs(argi).toInt
 			} else if (("--threshold".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				threshold = xargs(argi).toDouble
-			} else if (("--max-num-roc-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--max-num-summary-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				maxNumRocSamples = xargs(argi).toInt
+				maxNumSummarySamples = xargs(argi).toInt
 			} else if (("--use-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useIndexedData = xargs(argi).toInt
@@ -147,19 +143,23 @@ object GBRTErrorAnalyzer {
 						stats1._4 + stats2._4))
 		}
 		
+		// 2.1 Samples for scatter plot.
 		
+		val numSummarySamples : Int = Math.min(maxNumSummarySamples, testSamples.length)
+		val summarySampleIds : Set[Long] =
+				Utils.sampleWithoutReplacement(testSamples.length, numSummarySamples)
+		val summarySamples : List[Array[Double]] = testSamples.par.zipWithIndex.
+				filter(sampleId => summarySampleIds.contains(sampleId._2)).map(_._1).toList
+		val predictedVsActual : List[(Double, Double)] = summarySamples.map(testSample => 
+					(GBRT.predict(testSample, rootNodes), testSample(0)))
+					
+					
 		// 3. Calculate AUC for binary case.
 		
 		var roc : Array[(Double, Double, Double)] = null
 		var auc : Double = 0
 		if (binaryMode == 1) {
-			val numRocSamples : Int = Math.min(maxNumRocSamples, testSamples.length)
-			val rocSampleIds : Set[Long] =
-					Utils.sampleWithoutReplacement(testSamples.length, numRocSamples)
-			val rocSamples : List[Array[Double]] = testSamples.par.zipWithIndex.
-					filter(sampleId => rocSampleIds.contains(sampleId._2)).map(_._1).toList
-			val scoresLabels : List[(Double, Int)] = rocSamples.map(testSample => 
-					(GBRT.predict(testSample, rootNodes), testSample(0).toInt))
+			val scoresLabels : List[(Double, Int)] = predictedVsActual.map(x => (x._1, x._2.toInt))
 			val rocAuc = Utils.findRocAuc(scoresLabels)
 			roc = rocAuc._1
 			auc = rocAuc._2
@@ -183,7 +183,8 @@ object GBRTErrorAnalyzer {
 			lines += "Precision = " + tp + "/" + (tp + fp) + " = " +
 					"%.5f".format(tp.toDouble / (tp + fp))
 			lines += "F1 = " +  "%.5f".format(2 * tp.toDouble / (2 * tp + fn + fp))
-			lines += "A = " + "%.5f".format((tn + tp).toDouble / (tn + tp + fn + fp))
+			lines += "A = " + (tn + tp) + "/" + (tn + tp + fn + fp) + " = " +
+					"%.5f".format((tn + tp).toDouble / (tn + tp + fn + fp))
 			lines += "AUC = " + "%.5f".format(auc)
 		}
 		lines += "RMSE = " + "%.5f".format(math.sqrt(errorStats._2 / errorStats._1))
@@ -191,14 +192,18 @@ object GBRTErrorAnalyzer {
 		lines += "Trivial response = " + "%.5f".format(trivialResponse)
 		lines += "Trivial RMSE = " + "%.5f".format(math.sqrt(trivialErrorStats._2 / trivialErrorStats._1))
 		lines += "Trivial MAE = " + "%.5f".format(trivialErrorStats._3 / trivialErrorStats._1)
-		Utils.createParentDirs(errorFile)
-		var printWriter : PrintWriter = new PrintWriter(new File(errorFile))
+		(new File(errorDir)).mkdirs
+		var printWriter : PrintWriter = new PrintWriter(new File(errorDir + "/error.txt"))
 		for (line <- lines) {
 			printWriter.println(line)
 		}
 		printWriter.close
+		printWriter = new PrintWriter(new File(errorDir + "/scatter_plot.txt"))
+		printWriter.println(predictedVsActual.map(x => "%.5f".format(x._1) + "\t" +
+					"%.5f".format(x._2)).mkString("\n"))
+		printWriter.close
 		if (binaryMode == 1) {
-			printWriter = new PrintWriter(new File(rocFile))
+			printWriter = new PrintWriter(new File(errorDir + "/roc.txt"))
 			printWriter.println(roc.map(x => "%.5f".format(x._1) + "\t" +
 						"%.5f".format(x._2) + "\t" +
 						"%.5f".format(x._3)).mkString("\n"))

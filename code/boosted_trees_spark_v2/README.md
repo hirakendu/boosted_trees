@@ -156,7 +156,7 @@ For examples, we assume that the `${JARS}` folder contains
           boosted_trees.DataIndexer \
           --header-file ${WORK}/header.txt \
           --data-file ${WORK}/split/train_data.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
           --generate-indexes 1 \
           --encode-data 1
@@ -207,11 +207,12 @@ For examples, we assume that the `${JARS}` folder contains
           --header-file ${WORK}/header.txt \
           --feature-weights-file "" \
           --data-file ${WORK}/split/train_data.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
-          --model-dir ${WORK}/tree/ \
+          --model-dir ${WORK}/tree \
           --max-depth 5 \
           --min-gain-fraction 0.01 \
+          --min-local-gain-fraction 1 \
           --use-sample-weights 0 \
           --use-indexed-data 0 \
           --save-indexed-data 0
@@ -222,6 +223,8 @@ For examples, we assume that the `${JARS}` folder contains
     case, indexing is performed using same indexes as train data before prediction.
     Reads tree model from `${WORK}/tree/tree.txt`.
     The output errors are saved to `${WORK}/tree/error.txt`.
+    Sample points for scatter plot (predicted,actual) are saved to
+    `${WORK}/tree/scatter_plot.txt`.
     When binary mode is enabled, predictions are 0 or 1 based on whether the
     scores are lower or higher than specified threshold. In this case,
     additional error statistics like TPR, FPR, AUC are printed to `error.txt`.
@@ -234,14 +237,13 @@ For examples, we assume that the `${JARS}` folder contains
           boosted_trees.RegressionTreeErrorAnalyzer \
           --header-file ${WORK}/header.txt \
           --data-file ${WORK}/split/test_data.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
-          --model-dir ${WORK}/tree/ \
-          --error-file ${WORK}/tree/error.txt \
-          --roc-file ${WORK}/tree/roc.txt \
+          --model-dir ${WORK}/tree \
+          --error-dir ${WORK}/tree \
           --binary-mode 0 \
           --threshold 0.5 \
-          --max-num-roc-samples 100000 \
+          --max-num-summary-samples 100000 \
           --use-indexed-data 0 \
           --save-indexed-data 0
         
@@ -255,7 +257,7 @@ For examples, we assume that the `${JARS}` folder contains
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.RegressionTreeDetailsPrinter \
           --header-file ${WORK}/header.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --model-dir ${WORK}/tree/
      
  10. **Regression tree DOT printer**: prints a Graphviz DOT file that
@@ -279,13 +281,14 @@ For examples, we assume that the `${JARS}` folder contains
           --header-file ${WORK}/header.txt \
           --feature-weights-file "" \
           --data-file ${WORK}/split/train_data.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_train_data.txt \
-          --model-dir ${WORK}/forest/ \
+          --model-dir ${WORK}/forest \
           --num-trees 5 \
           --shrinkage 0.8 \
           --max-depth 4 \
           --min-gain-fraction 0.01 \
+          --min-local-gain-fraction 1 \
           --use-sample-weights 0 \
           --use-indexed-data 0 \
           --save-indexed-data 0
@@ -298,14 +301,13 @@ For examples, we assume that the `${JARS}` folder contains
           boosted_trees.GBRTErrorAnalyzer \
           --header-file ${WORK}/header.txt \
           --data-file ${WORK}/split/test_data.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
-          --model-dir ${WORK}/forest/ \
-          --error-file ${WORK}/forest/error.txt \
-          --roc-file ${WORK}/forest/roc.txt \
+          --model-dir ${WORK}/forest \
+          --error-dir ${WORK}/forest \
           --binary-mode 0 \
           --threshold 0.5 \
-          --max-num-roc-samples 100000 \
+          --max-num-summary-samples 100000 \
           --use-indexed-data 0 \
           --save-indexed-data 0
          
@@ -315,7 +317,7 @@ For examples, we assume that the `${JARS}` folder contains
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTDetailsPrinter \
           --header-file ${WORK}/header.txt \
-          --indexes-dir ${WORK}/indexing/indexes/ \
+          --indexes-dir ${WORK}/indexing/indexes \
           --model-dir ${WORK}/forest/
           
  14. **GBRT DOT printer**: prints Graphviz DOT files that
@@ -448,7 +450,7 @@ are provided below. For examples of the same on Yarn cluster using
         --spark-master^local[4]^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
         --generate-indexes^1^\
         --encode-data^1 \
@@ -475,16 +477,18 @@ are provided below. For examples of the same on Yarn cluster using
         --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
-        --model-dir^${DIST_WORK}/tree/^\
+        --model-dir^${DIST_WORK}/tree^\
         --max-depth^5^\
         --min-gain-fraction^0.01^\
+        --min-local-gain-fraction^1^\
         --min-distributed-samples^10000^\
         --use-sample-weights^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0 \
+        --cache-indexed-data^0^\
+        --use-arrays^0 \
           2>spark_log.txt
      
  7. **Regression tree error analyzer**:
@@ -495,14 +499,13 @@ are provided below. For examples of the same on Yarn cluster using
         --spark-master^local[4]^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/test_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
-        --model-dir^${DIST_WORK}/tree/^\
-        --error-file^${DIST_WORK}/tree/error.txt^\
-        --roc-file^${DIST_WORK}/tree/roc.txt^\
+        --model-dir^${DIST_WORK}/tree^\
+        --error-dir^${DIST_WORK}/tree^\
         --binary-mode^0^\
         --threshold^0.5^\
-        --max-num-roc-samples^100000^\
+        --max-num-summary-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0 \
           2>spark_log.txt
@@ -516,21 +519,23 @@ are provided below. For examples of the same on Yarn cluster using
         --header-file^${DIST_WORK}/header.txt^\
         --feature-weights-file^^\
         --data-file^${DIST_WORK}/split/train_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_train_data.txt^\
         --residual-data-file^${DIST_WORK}/indexing/residual_data.txt^\
-        --model-dir^${DIST_WORK}/forest/^\
+        --model-dir^${DIST_WORK}/forest^\
         --num-trees^5^\
         --shrinkage^0.8^\
         --max-depth^4^\
         --min-gain-fraction^0.01^\
+        --min-local-gain-fraction^1^\
         --min-distributed-samples^10000^\
         --use-sample-weights^0^\
         --initial-num-trees^0^\
         --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0 \
+        --cache-indexed-data^0^\
+        --use-arrays^0 \
           2>spark_log.txt
      
  9. **GBRT error analyzer**:
@@ -541,14 +546,13 @@ are provided below. For examples of the same on Yarn cluster using
         --spark-master^local[4]^\
         --header-file^${DIST_WORK}/header.txt^\
         --data-file^${DIST_WORK}/split/test_data.txt^\
-        --indexes-dir^${DIST_WORK}/indexing/indexes/^\
+        --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
-        --model-dir^${DIST_WORK}/forest/^\
-        --error-file^${DIST_WORK}/forest/error.txt^\
-        --roc-file^${DIST_WORK}/forest/roc.txt^\
+        --model-dir^${DIST_WORK}/forest^\
+        --error-dir^${DIST_WORK}/forest^\
         --binary-mode^0^\
         --threshold^0.5^\
-        --max-num-roc-samples^100000^\
+        --max-num-summary-samples^100000^\
         --use-indexed-data^0^\
         --save-indexed-data^0 \
           2>spark_log.txt

@@ -45,9 +45,9 @@ object SparkIndexing {
 		//    for each categorical feature.
 		
 		// Reducer to be used in next map-reduce step.
-		def mergeValueSetArrays(valueSetArray1 : Array[MuSet[String]],
-				valueSetArray2 : Array[MuSet[String]]) :  Array[MuSet[String]] = {
-			var mergedValueSetArray : Array[MuSet[String]] = new Array(featureTypes.length) 
+		def mergeValueSetArrays(valueSetArray1 : Array[Set[String]],
+				valueSetArray2 : Array[Set[String]]) :  Array[Set[String]] = {
+			val mergedValueSetArray : Array[Set[String]] = new Array(featureTypes.length) 
 			// ParSeq(Range(1, featureTypes.length) :_*).foreach(j => {
 			for (j <- 1 to featureTypes.length - 1) {
 				if (featureTypes(j) == 1) {
@@ -60,9 +60,9 @@ object SparkIndexing {
 		
 //		// Old version. Giant reduce/s.
 //		val rawValuesForFeatures : Array[MuSet[String]] =
-//			rawSamples.filter(_.split("\t").length == featureTypes.length).
+//			rawSamples.filter(_.split("\t", -1).length == featureTypes.length).
 //			map(rawSample => {
-//				val rawValues : Array[String] = rawSample.split("\t")
+//				val rawValues : Array[String] = rawSample.split("\t", -1)
 //				val rawValuesTuple : Array[MuSet[String]] = new Array(featureTypes.length)
 //				// ParSeq(Range(1, featureTypes.length) :_*).foreach(j => {
 //				for (j <- 1 to featureTypes.length - 1) {
@@ -79,22 +79,16 @@ object SparkIndexing {
 //			reduce(mergeValueSetArrays(_, _))
 			
 		// New version. Iterative reduces on mapPartitions + final reduce.
-		val rawValuesForFeatures : Array[MuSet[String]] =
-		rawSamples.filter(_.split("\t").length == featureTypes.length).
+		val rawValuesForFeatures : Array[Set[String]] =
+		rawSamples.filter(_.split("\t", -1).length == featureTypes.length).
 			mapPartitions(rawSamplesIterator => {
+				val rawSamplesArray : Array[Array[String]] =
+					rawSamplesIterator.toArray.map(_.split("\t", -1))
 				// Find the set of values for this partition.
-				val rawValuesForFeatures : Array[MuSet[String]] = new Array(featureTypes.length)
+				val rawValuesForFeatures : Array[Set[String]] = new Array(featureTypes.length)
 				for (j <- 1 to featureTypes.length - 1) {
 					if (featureTypes(j) == 1) {
-						rawValuesForFeatures(j) = MuSet()
-					}
-				}
-				while (rawSamplesIterator.hasNext) {
-					val values : Array[String] = rawSamplesIterator.next.split("\t")
-					for (j <- 1 to featureTypes.length - 1) {
-						if (featureTypes(j) == 1) {
-							rawValuesForFeatures(j) += values(j)
-						}
+						rawValuesForFeatures(j) = rawSamplesArray.map(_(j)).toSet
 					}
 				}
 				Iterator(rawValuesForFeatures)
@@ -171,7 +165,7 @@ object SparkIndexing {
 	
 	def indexRawData(rawSamples : RDD[String], featureTypes : Array[Int], 
 			indexes : Array[Map[String, Int]]) : RDD[Array[Double]] = {
-		rawSamples.filter(_.split("\t").length == featureTypes.length).
+		rawSamples.filter(_.split("\t", -1).length == featureTypes.length).
 			map(rawSample => Indexing.indexRawSample(rawSample, featureTypes, indexes))
 	}
 

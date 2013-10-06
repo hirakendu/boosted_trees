@@ -41,9 +41,10 @@ object RegressionTree {
 	//      for a given dataset.
 	
 	def trainNode(node : Node, samples : List[Array[Double]],
-			featureTypes : Array[Int], featureWeights : Array[Double],
+			featureTypes : Array[Int], numValuesForFeatures : Array[Int],
+			featureWeights : Array[Double],
 			maxDepth : Int = 4, minGain : Double = 1e-6,
-			useSampleWeights: Int = 0) :
+			minLocalGainFraction : Double = 1, useSampleWeights: Int = 0) :
 			(List[Array[Double]], List[Array[Double]]) = {
 		
 		// 0. Parameters.
@@ -53,7 +54,7 @@ object RegressionTree {
 		// 1. Some node statistics, prior to training.
 		val numFeatures : Int = featureTypes.length
 		if (useSampleWeights == 0) {
-			val stats : (Long, Double, Double) = samples.par.
+			val stats : (Long, Double, Double) = samples.
 				map(sample => (1L, sample(0), sample(0) * sample(0))).
 				reduce((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3))
@@ -62,7 +63,7 @@ object RegressionTree {
 			node.response = stats._2 / stats._1
 			node.error = stats._3 - stats._2 * stats._2 / stats._1
 		} else {
-			val stats : (Long, Double, Double, Double) = samples.par.
+			val stats : (Long, Double, Double, Double) = samples.
 				map(sample => (1L, sample(numFeatures - 1),
 						sample(numFeatures - 1) * sample(0),
 						sample(numFeatures - 1) * sample(0) * sample(0))).
@@ -100,7 +101,7 @@ object RegressionTree {
 		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
 		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
 		val quantileSampleIds : Set[Long] = Utils.sampleWithoutReplacement(numSamples, numQuantileSamples)
-		val quantileSamples : List[Array[Double]] = samples.par.zipWithIndex.
+		val quantileSamples : List[Array[Double]] = samples.zipWithIndex.
 			filter(sampleId => quantileSampleIds.contains(sampleId._2)).map(_._1).toList
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
@@ -125,7 +126,7 @@ object RegressionTree {
 		//      for various feauture-value bins. Most data intensive.
 //		// Old method: giant reduce.
 //		val statsForFeatureBins : List[((Int, Int), (Long, Double, Double))] =
-//			samples.par.flatMap(sample => {
+//			samples.flatMap(sample => {
 //				val square : Double = sample(0) * sample(0)
 //				val valueBinsForFeatures : Array[Int] = new Array(numFeatures)
 //				// ParSeq(Range(1, numFeatures) :_*).foreach(j => {
@@ -166,7 +167,17 @@ object RegressionTree {
 //			}).toList
 		
 		// New method. Iterative reduce.
-		val statsForFeatureBinsMap : MuMap[(Int, Int), (Double, Double, Double)] = MuMap()
+		val statsForFeatureBins : Array[Array[Array[Double]]] = new Array(numFeatures)
+		for (j <- 1 to numFeatures - 1) {
+			if (featureTypes(j) == 0) {
+				statsForFeatureBins(j) = new Array(candidateThresholdsForFeatures(j).length + 1)
+			} else {
+				statsForFeatureBins(j) = new Array(numValuesForFeatures(j))
+			}
+			for (b <- 0 to statsForFeatureBins(j).length - 1) {
+				statsForFeatureBins(j)(b) = Array(0, 0, 0)	
+			}
+		}
 		for (sample <- samples) {
 			val square : Double = sample(0) * sample(0)
 			// ParSeq(Range(1, numFeatures) :_*).foreach(j => {
@@ -175,41 +186,39 @@ object RegressionTree {
 				if (featureTypes(j) == 0) {
 					// Continuous feature.
 					val numBins : Int =  candidateThresholdsForFeatures(j).length + 1
-					bj = numBins - 1
-					breakable { for (b <- 0 to numBins - 2) {
-						if (sample(j) < candidateThresholdsForFeatures(j)(b)) {
-							bj = b
-							break
+					var b1 : Int = 0
+					var b2 : Int = numBins - 1
+					while (b1 < b2) {
+						val b3 = (b1 + b2) / 2
+						if (sample(j) < candidateThresholdsForFeatures(j)(b3)) {
+							b2 = b3
+						} else {
+							b1 = b3 + 1
 						}
-					} }
+					}
+					bj = b1
+//					breakable { for (b <- 0 to numBins - 2) {
+//						if (sample(j) < candidateThresholdsForFeatures(j)(b)) {
+//							bj = b
+//							break
+//						}
+//					} }
 				} else if (featureTypes(j) == 1) {
 					// Discrete feature.
 					bj = sample(j).toInt
 				}
-				if (statsForFeatureBinsMap.contains((j, bj))) {
-					val oldStats : (Double, Double, Double) = statsForFeatureBinsMap(j, bj)
-					if (useSampleWeights == 0) {
-						statsForFeatureBinsMap((j, bj)) = (oldStats._1 + 1, oldStats._2 + sample(0),
-								oldStats._3 + square)
-					} else {
-						statsForFeatureBinsMap((j, bj)) = (oldStats._1 + sample(numFeatures - 1),
-								oldStats._2 + sample(numFeatures - 1) * sample(0),
-								oldStats._3 + sample(numFeatures - 1) * square)
-					}
+				if (useSampleWeights == 0) {
+					statsForFeatureBins(j)(bj)(0) += 1
+					statsForFeatureBins(j)(bj)(1) += sample(0)
+					statsForFeatureBins(j)(bj)(2) += square
 				} else {
-					if (useSampleWeights == 0) {
-						statsForFeatureBinsMap((j, bj)) = (1L, sample(0), square)
-					} else {
-						statsForFeatureBinsMap((j, bj)) = (sample(numFeatures - 1),
-								sample(numFeatures - 1) * sample(0),
-								sample(numFeatures - 1) * square)
-					}
+					statsForFeatureBins(j)(bj)(0) += sample(numFeatures - 1)
+					statsForFeatureBins(j)(bj)(1) += sample(0) * sample(numFeatures - 1)
+					statsForFeatureBins(j)(bj)(2) += square * sample(numFeatures - 1)
 				}
 			}
 			// })
 		}
-		val statsForFeatureBins : List[((Int, Int), (Double, Double, Double))] =
-				statsForFeatureBinsMap.toList
 			
 		// 3.3. Separate the histograms, means, and calculate errors.
 		//      Sort bins of discrete features by mean responses.
@@ -219,11 +228,9 @@ object RegressionTree {
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			val statsForBins : List[(Int, Double, Double, Double)] =
-				statsForFeatureBins.filter(_._1._1 == j).
-					map(statsForFeatureBin => (statsForFeatureBin._1._2,
-							statsForFeatureBin._2._1,
-							statsForFeatureBin._2._2,
-							statsForFeatureBin._2._3))
+				statsForFeatureBins(j).zipWithIndex.
+					map(x => (x._2, x._1(0), x._1(1), x._1(2))).
+					filter(_._2 > 0). toList  // Filter is required to divide by counts.
 			if (featureTypes(j) == 0) {
 				// For continuous features, order by bin indices,
 				// i.e., order of quantiles.
@@ -331,7 +338,7 @@ object RegressionTree {
 		node.gain = node.error - node.splitError
 		
 		// 3.6. Don't split if no gain.
-		if (node.gain <= minGain) {
+		if (node.gain <= minGain + 1e-7 && node.gain <= minLocalGainFraction * node.error + 1e-7) {
 			return (Nil, Nil)
 		}
 		
@@ -364,22 +371,24 @@ object RegressionTree {
 	// 1.2. Function for training a tree by recursively training/splitting nodes.
 	
 	def trainTree(samples: List[Array[Double]], featureTypes : Array[Int],
-			featureWeights : Array[Double], maxDepth : Int = 4,
-			minGainFraction : Double = 0.01, useSampleWeights : Int = 0) : Node = {
+			numValuesForFeatures : Array[Int], featureWeights : Array[Double],
+			maxDepth : Int = 4, minGainFraction : Double = 0.01,
+			minLocalGainFraction : Double = 1,
+			useSampleWeights : Int = 0) : Node = {
 		val rootNode : Node = new Node
 		rootNode.id = 1
 		rootNode.depth = 0
 		// Find initial error to determine minGain.
 		var minGain : Double = 0
 		if (useSampleWeights == 0) {
-			val stats : (Long, Double, Double) = samples.par.
+			val stats : (Long, Double, Double) = samples.
 				map(sample => (1L, sample(0), sample(0) * sample(0))).
 				reduce((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3))
 			minGain = minGainFraction * (stats._3 - stats._2 * stats._2 / stats._1)
 		} else {
 			val numFeatures : Int = featureTypes.length
-			val stats : (Double, Double, Double) = samples.par.
+			val stats : (Double, Double, Double) = samples.
 				map(sample => (sample(numFeatures - 1),
 						sample(numFeatures - 1) * sample(0),
 						sample(numFeatures - 1) * sample(0) * sample(0))).
@@ -397,8 +406,10 @@ object RegressionTree {
 			println("      Training Node # " + node.id + ".")
 			val (leftSamples, rightSamples) :
 				(List[Array[Double]], List[Array[Double]]) =
-					trainNode(node, nodeSamples, featureTypes, featureWeights,
-							maxDepth, minGain, useSampleWeights)
+					trainNode(node, nodeSamples, featureTypes,
+							numValuesForFeatures, featureWeights,
+							maxDepth, minGain, minLocalGainFraction,
+							useSampleWeights)
 			if (!node.isLeaf) {
 				nodesStack.push((node.rightChild.get, rightSamples))
 				nodesStack.push((node.leftChild.get, leftSamples))

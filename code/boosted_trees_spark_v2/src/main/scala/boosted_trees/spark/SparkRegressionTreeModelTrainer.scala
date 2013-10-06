@@ -25,11 +25,13 @@ object SparkRegressionTreeModelTrainer {
 		var modelDir : String = SparkDefaultParameters.treeModelDir
 		var maxDepth : Int = 5
 		var minGainFraction : Double = 0.01
+		var minLocalGainFraction : Double = 0.1
 		var minDistributedSamples : Int = 10000
 		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
 		var cacheIndexedData : Int = 0
+		var useArrays : Int = 0
 
 		// 0.1. Read parameters.
 			
@@ -81,6 +83,9 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--min-local-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				minLocalGainFraction = xargs(argi).toDouble
 			} else if (("--min-distributed-samples".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minDistributedSamples = xargs(argi).toInt
@@ -96,6 +101,9 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--cache-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				cacheIndexedData = xargs(argi).toInt
+			} else if (("--use-arrays".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useArrays = xargs(argi).toInt
 			} else {
 				println("\n  Error parsing argument \"" + xargs(argi) +
 						"\".\n")
@@ -120,6 +128,7 @@ object SparkRegressionTreeModelTrainer {
 		// 1.1. Read header.
 		val features : Array[String] = SparkUtils.readSmallFile(sc, headerFile)
 										// .first.split("\t")
+		val numFeatures : Int = features.length
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
 		var featureWeights : Array[Double] = Range(0, features.length).map(x => 1.0).toArray
@@ -129,12 +138,12 @@ object SparkRegressionTreeModelTrainer {
 		
 		// 1.2 Read data and index it.
 		
+		var indexes : Array[Map[String, Int]] = null
 		var samples : RDD[Array[Double]] = null
-		
 		if (useIndexedData == 0) {
 			val rawSamples : RDD[String] = sc.textFile(dataFile)
 			// Index categorical features/fields and re-encode data.
-			val indexes :  Array[Map[String,Int]] = SparkIndexing.generateIndexes(rawSamples, featureTypes)
+			indexes = SparkIndexing.generateIndexes(rawSamples, featureTypes)
 			samples = SparkIndexing.indexRawData(rawSamples, featureTypes, indexes)
 			
 			// Save indexes and indexed data.
@@ -145,6 +154,14 @@ object SparkRegressionTreeModelTrainer {
 		} else {
 			// Use indexed data.
 			samples = SparkIndexing.readIndexedData(sc, indexedDataFile)
+			// Read indexes for categorical features.
+			indexes = SparkIndexing.readIndexes(sc, indexesDir, features)
+		}
+		val numValuesForFeatures : Array[Int] = new Array(numFeatures)
+		for (j <- 0 to numFeatures - 1) {
+			if (featureTypes(j) == 1) {
+				numValuesForFeatures(j) = indexes(j).size
+			}
 		}
 		
 		
@@ -154,14 +171,15 @@ object SparkRegressionTreeModelTrainer {
 		
 		if (cacheIndexedData == 1) {
 			// samples.persist(StorageLevel.MEMORY_AND_DISK)
-			// samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
-			samples.persist
+			samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+			// samples.persist
 			samples.map(_(0)).reduce(_ + _)  // Load now.
 		}
 		
 		val rootNode : Node = SparkRegressionTree.trainTree(samples, featureTypes,
-				featureWeights, maxDepth, minGainFraction,
-				minDistributedSamples, useSampleWeights)
+				numValuesForFeatures, featureWeights, maxDepth, minGainFraction,
+				minLocalGainFraction, minDistributedSamples, useSampleWeights,
+				useArrays)
 		
 		
 		// 3. Print and save the tree.

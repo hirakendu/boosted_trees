@@ -48,7 +48,7 @@ object Indexing {
 		}
 		
 		while (rawSamplesIterator.hasNext) {
-			val values : Array[String] = rawSamplesIterator.next.split("\t")
+			val values : Array[String] = rawSamplesIterator.next.split("\t", -1)
 			for (j <- 1 to featureTypes.length - 1) {
 				if (featureTypes(j) == 1) {
 					rawValuesForFeatures(j) += values(j)
@@ -124,7 +124,7 @@ object Indexing {
 								features(j).replace("$", "") + "_index.txt")).
 								getLines.toSeq.
 								map(kv => {
-									val kvArray : Array[String] = kv.split("\t")
+									val kvArray : Array[String] = kv.split("\t", -1)
 									(kvArray(0), kvArray(1).toInt)
 								}).toMap
 			}
@@ -143,9 +143,10 @@ object Indexing {
 	def indexRawSample(rawSample : String, featureTypes : Array[Int],
 			indexes : Array[Map[String, Int]]) : Array[Double] = {
 		
-		val rawValues : Array[String] = rawSample.split("\t")
+		val rawValues : Array[String] = rawSample.split("\t", -1)
 		val sample : Array[Double] = new Array(featureTypes.length)
 		sample(0) = rawValues(0).toDouble
+		
 		// ParSeq(Range(1, featureTypes.length) :_*).foreach(j => {
 		for (j <- 1 to featureTypes.length - 1) {
 			if (featureTypes(j) == 0) {

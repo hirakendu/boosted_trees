@@ -18,6 +18,7 @@ object RegressionTreeModelTrainer {
 		var modelDir : String = DefaultParameters.treeModelDir
 		var maxDepth : Int = 5
 		var minGainFraction : Double = 0.01
+		var minLocalGainFraction : Double = 1
 		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
@@ -54,6 +55,9 @@ object RegressionTreeModelTrainer {
 			} else if (("--min-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				minGainFraction = xargs(argi).toDouble
+			} else if (("--min-local-gain-fraction".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				minLocalGainFraction = xargs(argi).toDouble
 			} else if (("--use-sample-weights".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useSampleWeights = xargs(argi).toInt
@@ -78,6 +82,7 @@ object RegressionTreeModelTrainer {
 		// 1.1. Read header.
 		val features : Array[String] = Source.fromFile(new File(headerFile)).getLines.toArray
 											// .first.split("\t")
+		val numFeatures : Int = features.length
 		val featureTypes : Array[Int] = features.map(field => {if (field.endsWith("$")) 1 else 0})
 			// 0 -> continuous, 1 -> discrete
 		var featureWeights : Array[Double] = Range(0, features.length).map(x => 1.0).toArray
@@ -87,12 +92,11 @@ object RegressionTreeModelTrainer {
 		
 		// 1.2 Read data and index it.
 		
+		var indexes : Array[Map[String, Int]] = null
 		var samples : List[Array[Double]] = Nil
-		
 		if (useIndexedData == 0) {
 			// Index categorical features/fields and re-encode data.
-			val indexes :  Array[Map[String,Int]] =
-				Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
+			indexes = Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
 			samples = Indexing.indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
 
 			// Save indexes and indexed data.
@@ -103,15 +107,24 @@ object RegressionTreeModelTrainer {
 		} else {
 			// Use indexed data.
 			samples = Indexing.readIndexedData(indexedDataFile)
+			// Read indexes for categorical features.
+			indexes = Indexing.readIndexes(indexesDir, features)
 		}
-		
+		val numValuesForFeatures : Array[Int] = new Array(numFeatures)
+		for (j <- 1 to numFeatures - 1) {
+			if (featureTypes(j) == 1) {
+				numValuesForFeatures(j) = indexes(j).size
+			}
+		}
 		
 		// 2. Train tree model.
 		
 		println("\n  Training tree model.\n")
 		
 		val rootNode : Node = RegressionTree.trainTree(samples, featureTypes,
-				featureWeights, maxDepth, minGainFraction, useSampleWeights)
+				numValuesForFeatures, featureWeights,
+				maxDepth, minGainFraction, minLocalGainFraction,
+				useSampleWeights)
 		
 		
 		// 3. Print and save the tree.

@@ -1,33 +1,23 @@
 #!/usr/bin/env bash
 
-if [ -z "${SPARK_HOME}" ]; then
-	export SPARK_HOME="${HOME}/opt/spark"
+SPARK_ENV_SH="$(dirname $0)/spark_env.sh"
+if [ -e "${SPARK_ENV_SH}" ]; then
+  source ${SPARK_ENV_SH}
 fi
 
 if [ -z "${SPARK_MASTER}" ]; then
-	export SPARK_MASTER="local[2,2]"
+  export SPARK_MASTER="local[2,2]"
 fi
 
 if [ -z "${SPARK_MEM}" ]; then
-	SPARK_MEM="3g"
+  SPARK_MEM="3g"
 fi
 
-if [ -z "${SPARK_VERSION}" ]; then
-	export SPARK_VERSION="0.8.0-SNAPSHOT"
-fi
-
-if [ -z "${SPARK_SCALA_VERSION}" ]; then
-	export SPARK_SCALA_VERSION="2.9.3"
-fi
-
-if [ -z "${SPARK_HADOOP_VERSION}" ]; then
-	export SPARK_HADOOP_VERSION="0.23.8"
-fi
-
+# For old Spark, not need to include jar in classpath, done automatically.
 export SPARK_JAR="${SPARK_HOME}/assembly/target/scala-${SPARK_SCALA_VERSION}/spark-assembly-${SPARK_VERSION}-hadoop${SPARK_HADOOP_VERSION}.jar"
 
 export SPARK_CLASSPATH="${SPARK_CLASSPATH}:${SPARK_JAR}"
 
 cd ${SPARK_HOME}
-# ./run $@
+# ./run $@  # old
 ./spark-class $@

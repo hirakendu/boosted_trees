@@ -53,9 +53,10 @@ object GBRT {
 	// 1.2. Function for training a forest of trees using gradient boosting.
 	
 	def trainForest(samples : List[Array[Double]], featureTypes : Array[Int],
-			featureWeights : Array[Double],
+			numValuesForFeatures : Array[Int], featureWeights : Array[Double],
 			numTrees : Int = 5, shrinkage : Double = 0.8,
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
+			minLocalGainFraction : Double = 1,
 			useSampleWeights : Int = 0) : Array[Node] = {
 		val residualSamples : List[Array[Double]] = samples.par.map(_.clone).toList
 				// Create a copy of samples which will be modified over iterations.
@@ -80,7 +81,9 @@ object GBRT {
 				})
 			}
 			val rootNode = RegressionTree.trainTree(residualSamples, featureTypes,
-					featureWeights, maxDepth, minGainFraction, useSampleWeights)
+					numValuesForFeatures, featureWeights,
+					maxDepth, minGainFraction, minLocalGainFraction,
+					useSampleWeights)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
 		}
@@ -203,7 +206,7 @@ object GBRT {
 		val numTrees : Int = numTreesText(0).toInt
 		val rootNodes : Array[Node] = new Array(numTrees)
 		for (m <- 0 to numTrees - 1) {
-			rootNodes(m) = RegressionTree.readTree(nodesDir + "nodes_" + m + ".txt")
+			rootNodes(m) = RegressionTree.readTree(nodesDir + "/nodes_" + m + ".txt")
 		}
 		rootNodes
 	}
