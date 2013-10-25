@@ -240,7 +240,7 @@ For examples, we assume that the `${JARS}` folder contains
           --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
           --model-dir ${WORK}/tree \
-          --error-dir ${WORK}/tree \
+          --error-dir ${WORK}/tree/error \
           --binary-mode 0 \
           --threshold 0.5 \
           --max-num-summary-samples 100000 \
@@ -304,7 +304,7 @@ For examples, we assume that the `${JARS}` folder contains
           --indexes-dir ${WORK}/indexing/indexes \
           --indexed-data-file ${WORK}/indexing/indexed_test_data.txt \
           --model-dir ${WORK}/forest \
-          --error-dir ${WORK}/forest \
+          --error-dir ${WORK}/forest/error \
           --binary-mode 0 \
           --threshold 0.5 \
           --max-num-summary-samples 100000 \
@@ -502,7 +502,7 @@ are provided below. For examples of the same on Yarn cluster using
         --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/tree^\
-        --error-dir^${DIST_WORK}/tree^\
+        --error-dir^${DIST_WORK}/tree/error^\
         --binary-mode^0^\
         --threshold^0.5^\
         --max-num-summary-samples^100000^\
@@ -549,7 +549,7 @@ are provided below. For examples of the same on Yarn cluster using
         --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/forest^\
-        --error-dir^${DIST_WORK}/forest^\
+        --error-dir^${DIST_WORK}/forest/error^\
         --binary-mode^0^\
         --threshold^0.5^\
         --max-num-summary-samples^100000^\

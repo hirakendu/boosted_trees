@@ -140,7 +140,7 @@ are provided below.
         --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/tree^\
-        --error-dir^${DIST_WORK}/tree^\
+        --error-dir^${DIST_WORK}/tree/error^\
         --binary-mode^0^\
         --threshold^0.5^\
         --max-num-summary-samples^100000^\
@@ -197,7 +197,7 @@ are provided below.
         --indexes-dir^${DIST_WORK}/indexing/indexes^\
         --indexed-data-file^${DIST_WORK}/indexing/indexed_test_data.txt^\
         --model-dir^${DIST_WORK}/forest^\
-        --error-dir^${DIST_WORK}/forest^\
+        --error-dir^${DIST_WORK}/forest/error^\
         --binary-mode^0^\
         --threshold^0.5^\
         --max-num-summary-samples^100000^\

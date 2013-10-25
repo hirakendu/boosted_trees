@@ -14,15 +14,15 @@
 			<scope>runtime</scope>
 			<outputDirectory>/</outputDirectory>
 			<useTransitiveDependencies>false</useTransitiveDependencies>
-			<!-- This descriptor has transitive dependencies disabled. Have to 
-				explicitly specify all transitive dependencies in POM. -->
+			<!-- This descriptor has transitive dependencies disabled. Have to explicitly 
+				specify all transitive dependencies in POM. -->
 			<excludes>
 				<!-- All these should be provided by Spark runtime environment. -->
 				<exclude>org.scala-lang:scala-library</exclude>
+				<!-- <exclude>org.spark-project:*</exclude> -->
 				<exclude>org.apache.spark:*</exclude>
-				<exclude>org.spark-project:*</exclude>
 				<exclude>org.apache.hadoop:*</exclude>
-				<exclude>org.apache.hbase:hbase</exclude>
+				<!-- <exclude>org.apache.hbase:hbase</exclude> -->
 			</excludes>
 		</dependencySet>
 	</dependencySets>

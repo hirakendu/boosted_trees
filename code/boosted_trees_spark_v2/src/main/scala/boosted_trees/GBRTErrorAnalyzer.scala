@@ -18,7 +18,7 @@ object GBRTErrorAnalyzer {
 		var indexesDir : String = DefaultParameters.indexesDir
 		var indexedDataFile : String = DefaultParameters.indexedTestDataFile
 		var modelDir : String = DefaultParameters.forestModelDir
-		var errorDir : String = modelDir
+		var errorDir : String = modelDir + "/error"
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
 		var maxNumSummarySamples : Int = 100000

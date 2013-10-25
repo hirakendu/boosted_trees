@@ -18,7 +18,7 @@ object RegressionTreeErrorAnalyzer {
 		var indexesDir : String = DefaultParameters.indexesDir
 		var indexedDataFile : String = DefaultParameters.indexedTestDataFile
 		var modelDir : String = DefaultParameters.treeModelDir
-		var errorDir : String = modelDir
+		var errorDir : String = modelDir + "/error"
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
 		var maxNumSummarySamples : Int = 100000
@@ -170,7 +170,7 @@ object RegressionTreeErrorAnalyzer {
 		
 		println("\n  Saving error statistics.\n")
 		
-		val lines : MutableList[String] = MutableList() 
+		val lines : MutableList[String] = MutableList()
 		if (binaryMode == 1) {
 			val fp : Long =  binaryErrorStats._2
 			val fn : Long =  binaryErrorStats._4

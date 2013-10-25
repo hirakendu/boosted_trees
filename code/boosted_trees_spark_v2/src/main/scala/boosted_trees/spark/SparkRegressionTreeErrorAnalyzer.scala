@@ -29,7 +29,7 @@ object SparkRegressionTreeErrorAnalyzer {
 		var indexesDir : String = SparkDefaultParameters.indexesDir
 		var indexedDataFile : String = SparkDefaultParameters.indexedTestDataFile
 		var modelDir : String = SparkDefaultParameters.treeModelDir
-		var errorDir : String = modelDir
+		var errorDir : String = modelDir + "/error"
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
 		var maxNumSummarySamples : Int = 100000

@@ -25,7 +25,7 @@ object SparkGBRTErrorAnalyzer {
 		var indexesDir : String = SparkDefaultParameters.indexesDir
 		var indexedDataFile : String = SparkDefaultParameters.indexedTestDataFile
 		var modelDir : String = SparkDefaultParameters.forestModelDir
-		var errorDir : String = modelDir
+		var errorDir : String = modelDir + "/error"
 		var binaryMode : Int = 0
 		var threshold : Double = 0.5
 		var maxNumSummarySamples : Int = 100000
