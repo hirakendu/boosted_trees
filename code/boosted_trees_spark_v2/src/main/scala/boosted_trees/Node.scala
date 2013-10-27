@@ -31,5 +31,5 @@ class Node extends Serializable {
 		}
 		return false
 	}
-	
+
 }

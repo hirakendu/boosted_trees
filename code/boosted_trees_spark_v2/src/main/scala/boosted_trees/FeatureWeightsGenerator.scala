@@ -82,5 +82,5 @@ object FeatureWeightsGenerator {
 		printWriter.close
 		
 	}
-	
+
 }

@@ -145,5 +145,5 @@ object GBRTModelTrainer {
 		GBRT.printForest(modelDir + "/trees/", rootNodes)
 		
 	}
-	
+
 }

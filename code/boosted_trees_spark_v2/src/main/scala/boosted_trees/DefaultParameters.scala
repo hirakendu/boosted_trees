@@ -39,6 +39,5 @@ object DefaultParameters {
 	
 	// GBRTModelTrainer.
 	val forestModelDir : String = workDir + "/forest/"
-	
-	
+
 }

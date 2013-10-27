@@ -173,5 +173,5 @@ object SparkIndexing {
 			indexes : Array[Map[String, Int]]) : RDD[Array[Double]] = {
 		indexRawData(sc.textFile(dataFile), featureTypes, indexes)
 	}
-	
+
 }

@@ -622,5 +622,5 @@ object SparkRegressionTree {
 	def readTree(sc : SparkContext, nodesFile : String) : Node = {
 		RegressionTree.readTree(SparkUtils.readSmallFile(sc, nodesFile).toIterator)
 	}
-	
+
 }

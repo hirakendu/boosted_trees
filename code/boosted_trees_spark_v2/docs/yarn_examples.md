@@ -178,7 +178,7 @@ are provided below.
         --use-indexed-data^0^\
         --save-indexed-data^0^\
         --cache-indexed-data^1^\
-        --use-arrays^1 \
+        --use-arrays^1
      
  9. **GBRT error analyzer**:
 

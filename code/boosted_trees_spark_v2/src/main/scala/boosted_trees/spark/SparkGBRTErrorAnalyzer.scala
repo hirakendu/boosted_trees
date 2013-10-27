@@ -239,7 +239,5 @@ object SparkGBRTErrorAnalyzer {
 		}
 		
 	}
-	
-	
 
 }

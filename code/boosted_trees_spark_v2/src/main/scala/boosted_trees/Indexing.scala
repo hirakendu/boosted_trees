@@ -182,6 +182,5 @@ object Indexing {
 			indexes : Array[Map[String, Int]]) : List[Array[Double]] = {
 		indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
 	}
-	
 
 }

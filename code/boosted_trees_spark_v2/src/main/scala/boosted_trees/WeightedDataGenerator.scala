@@ -91,6 +91,5 @@ object WeightedDataGenerator {
 		printWriter.close
 		
 	}
-	
 
 }

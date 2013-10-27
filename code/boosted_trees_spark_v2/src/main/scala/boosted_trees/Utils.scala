@@ -139,5 +139,5 @@ object Utils {
 		var auc : Double = rocPoints.map(_._2).drop(1).reduce(_ + _) / numZeros
 		(rocPoints, auc)
 	}
-	
+
 }
