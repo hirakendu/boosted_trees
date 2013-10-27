@@ -487,8 +487,8 @@ are provided below. For examples of the same on Yarn cluster using
         --use-sample-weights^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --use-cache^1^\
-        --use-arrays^1 \
+        --use-arrays^1^\
+        --use-cache^1 \
           2>spark_log.txt
      
  7. **Regression tree error analyzer**:
@@ -534,8 +534,9 @@ are provided below. For examples of the same on Yarn cluster using
         --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
+        --use-arrays^1^\
         --use-cache^1^\
-        --use-arrays^1 \
+        --persist-interval^1 \
           2>spark_log.txt
      
  9. **GBRT error analyzer**:

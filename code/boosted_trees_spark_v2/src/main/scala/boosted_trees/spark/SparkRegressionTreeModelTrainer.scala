@@ -30,8 +30,8 @@ object SparkRegressionTreeModelTrainer {
 		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
-		var useCache : Int = 1
 		var useArrays : Int = 1
+		var useCache : Int = 1
 
 		// 0.1. Read parameters.
 			
@@ -98,12 +98,12 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				saveIndexedData = xargs(argi).toInt
-			} else if (("--use-cache".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
-				argi += 1
-				useCache = xargs(argi).toInt
 			} else if (("--use-arrays".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useArrays = xargs(argi).toInt
+			} else if (("--use-cache".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+				argi += 1
+				useCache = xargs(argi).toInt
 			} else {
 				println("\n  Error parsing argument \"" + xargs(argi) +
 						"\".\n")

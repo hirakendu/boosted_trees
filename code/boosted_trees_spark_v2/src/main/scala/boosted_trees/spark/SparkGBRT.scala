@@ -44,17 +44,30 @@ object SparkGBRT {
 			minLocalGainFraction : Double = 0.1, minDistributedSamples : Int = 10000,
 			useSampleWeights : Int = 0,
 			initialNumTrees : Int = 0,
-			useArrays : Int = 1, useCache : Int = 1) : Array[Node] = {
+			useArrays : Int = 1, useCache : Int = 1,
+			persistInterval : Int = 1) : Array[Node] = {
 		var residualSamples : RDD[Array[Double]] = samples
+		var oldPersistedResidualSamples : RDD[Array[Double]] = null
 		val rootNodes : Array[Node] = new Array(numTrees)
 		for (m <- 0 to numTrees - 1) {
 			println("    Training Tree # " + (m + initialNumTrees) + ".")
 			val initialTime : Long = System.currentTimeMillis
 			
+			if (useCache == 1 && m % persistInterval == 0) {
+				// residualSamples.persist(StorageLevel.MEMORY_AND_DISK)
+				residualSamples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+				// residualSamples.persist
+				// residualSamples.foreach(sample => {})  // Materialize before uncaching parent.
+				if (m > 0) {
+					oldPersistedResidualSamples.unpersist(true)
+				}
+				oldPersistedResidualSamples = residualSamples
+			}
+			
 			val rootNode = SparkRegressionTree.trainTree(residualSamples, featureTypes,
 					numValuesForFeatures, featureWeights, maxDepth, minGainFraction,
 					minLocalGainFraction, minDistributedSamples, useSampleWeights,
-					useArrays, useCache)
+					useArrays, useCache = 0)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
 			
@@ -64,13 +77,6 @@ object SparkGBRT {
 							RegressionTree.predict(sample, rootNodes(m))
 					sample
 				})
-			if (useCache == 1) {
-				// residualSamples.persist(StorageLevel.MEMORY_AND_DISK)
-				// residualSamples.persist(StorageLevel.MEMORY_AND_DISK_SER)
-				// residualSamples.persist
-				// residualSamples.foreach(sample => {})  // Materialize before uncaching parent.
-				oldResidualSamples.unpersist(true)
-			}
 			
 			val finalTime : Long = System.currentTimeMillis
 			println("    Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
