@@ -36,8 +36,8 @@ object SparkGBRTModelTrainer {
 		var residualMode : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
-		var cacheIndexedData : Int = 0
-		var useArrays : Int = 0
+		var useCache : Int = 1
+		var useArrays : Int = 1
 
 		// 0.1. Read parameters.
 			
@@ -119,9 +119,9 @@ object SparkGBRTModelTrainer {
 			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				saveIndexedData = xargs(argi).toInt
-			} else if (("--cache-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--use-cache".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				cacheIndexedData = xargs(argi).toInt
+				useCache = xargs(argi).toInt
 			} else if (("--use-arrays".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useArrays = xargs(argi).toInt
@@ -226,12 +226,12 @@ object SparkGBRTModelTrainer {
 			}
 		}
 		
-		if (cacheIndexedData == 1) {
-			// residualSamples.persist(StorageLevel.MEMORY_AND_DISK)
-			residualSamples.persist(StorageLevel.MEMORY_AND_DISK_SER)
-			// residualSamples.persist
-			residualSamples.map(_(0)).reduce(_ + _)  // Load now.
-		}
+//		if (useCache == 1) {
+//			// residualSamples.persist(StorageLevel.MEMORY_AND_DISK)
+//			residualSamples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//			// residualSamples.persist
+//			// residualSamples.foreach(sample => {})  // Load now.
+//		}
 		
 		finalTime = System.currentTimeMillis
 		println("  Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
@@ -246,7 +246,7 @@ object SparkGBRTModelTrainer {
 				featureTypes, numValuesForFeatures, featureWeights,
 				numTrees, shrinkage, maxDepth, minGainFraction, minLocalGainFraction,
 				minDistributedSamples, useSampleWeights, initialNumTrees,
-				useArrays)
+				useArrays, useCache)
 		
 		finalTime = System.currentTimeMillis
 		println("  Time taken = " + ((finalTime - initialTime) / 1000) + " s.")

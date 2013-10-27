@@ -30,6 +30,7 @@ import scala.util.control.Breaks._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
+import org.apache.spark.storage.StorageLevel
 
 import boosted_trees.Utils
 import boosted_trees.Node
@@ -52,7 +53,7 @@ object SparkRegressionTree {
 			featureWeights : Array[Double],
 			maxDepth : Int = 4, minGain : Double = 1e-6,
 			minLocalGainFraction : Double = 0.1, useSampleWeights : Int = 0,
-			useArrays : Int = 0) :
+			useArrays : Int = 1) :
 			(RDD[Array[Double]], RDD[Array[Double]]) = {
 		
 		// 0. Parameters.
@@ -230,11 +231,11 @@ object SparkRegressionTree {
 						statsForFeatureBinsMap(j) = new Array(numValuesForFeatures(j))
 					}
 					for (b <- 0 to statsForFeatureBinsMap(j).length - 1) {
-						statsForFeatureBinsMap(j)(b) = Array(0, 0, 0)	
+						statsForFeatureBinsMap(j)(b) = Array(0, 0, 0)
 					}
 				}
 				// val samplesList : List[Array[Double]] = samplesIterator.toList
-				// for (sample <- samplesList) {
+				// samplesList.foreach(sample => {
 				while (samplesIterator.hasNext) {
 					val sample : Array[Double] = samplesIterator.next
 					val square : Double = sample(0) * sample(0)
@@ -275,9 +276,10 @@ object SparkRegressionTree {
 							statsForFeatureBinsMap(j)(bj)(1) += sample(0) * sample(numFeatures - 1)
 							statsForFeatureBinsMap(j)(bj)(2) += square * sample(numFeatures - 1)
 						}
-					}
-					// })
-				}
+					}  // End for.
+					// })  // End ParSeq.foreach.
+				}  // End while.
+				// })  // End foreach. 
 				Iterator(statsForFeatureBinsMap)
 			}).
 			reduce((map1, map2) => {
@@ -530,7 +532,13 @@ object SparkRegressionTree {
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minLocalGainFraction : Double = 0.1,
 			minDistributedSamples : Int = 10000, useSampleWeights : Int = 0,
-			useArrays : Int = 0) : Node = {
+			useArrays : Int = 1, useCache : Int = 1) : Node = {
+		if (useCache == 1) {
+			// samples.persist(StorageLevel.MEMORY_AND_DISK)
+			samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+			// samples.persist
+			// samples.foreach(sample => {})  // Load now.
+		}
 		val rootNode : Node = new Node
 		rootNode.id = 1
 		rootNode.depth = 0

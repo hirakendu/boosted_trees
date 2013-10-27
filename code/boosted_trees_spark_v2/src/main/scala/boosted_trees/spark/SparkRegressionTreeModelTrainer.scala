@@ -30,8 +30,8 @@ object SparkRegressionTreeModelTrainer {
 		var useSampleWeights : Int = 0
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
-		var cacheIndexedData : Int = 0
-		var useArrays : Int = 0
+		var useCache : Int = 1
+		var useArrays : Int = 1
 
 		// 0.1. Read parameters.
 			
@@ -98,9 +98,9 @@ object SparkRegressionTreeModelTrainer {
 			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				saveIndexedData = xargs(argi).toInt
-			} else if (("--cache-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--use-cache".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				cacheIndexedData = xargs(argi).toInt
+				useCache = xargs(argi).toInt
 			} else if (("--use-arrays".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				useArrays = xargs(argi).toInt
@@ -169,17 +169,17 @@ object SparkRegressionTreeModelTrainer {
 		
 		println("\n  Training tree model.\n")
 		
-		if (cacheIndexedData == 1) {
-			// samples.persist(StorageLevel.MEMORY_AND_DISK)
-			samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
-			// samples.persist
-			samples.map(_(0)).reduce(_ + _)  // Load now.
-		}
+//		if (useCache == 1) {
+//			// samples.persist(StorageLevel.MEMORY_AND_DISK)
+//			samples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//			// samples.persist
+//			// samples.foreach(sample => {})  // Load now.
+//		}
 		
 		val rootNode : Node = SparkRegressionTree.trainTree(samples, featureTypes,
 				numValuesForFeatures, featureWeights, maxDepth, minGainFraction,
 				minLocalGainFraction, minDistributedSamples, useSampleWeights,
-				useArrays)
+				useArrays, useCache)
 		
 		
 		// 3. Print and save the tree.

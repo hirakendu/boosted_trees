@@ -120,8 +120,8 @@ are provided below.
         --use-sample-weights^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0^\
-        --use-arrays^0
+        --cache-indexed-data^1^\
+        --use-arrays^1
      
  7. **Regression tree error analyzer**:
 
@@ -177,8 +177,8 @@ are provided below.
         --residual-mode^0^\
         --use-indexed-data^0^\
         --save-indexed-data^0^\
-        --cache-indexed-data^0^\
-        --use-arrays^0 \
+        --cache-indexed-data^1^\
+        --use-arrays^1 \
      
  9. **GBRT error analyzer**:
 

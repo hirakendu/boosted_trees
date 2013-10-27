@@ -22,6 +22,7 @@ import scala.collection.mutable.Stack
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
+import org.apache.spark.storage.StorageLevel
 
 import boosted_trees.Node
 import boosted_trees.RegressionTree
@@ -43,40 +44,33 @@ object SparkGBRT {
 			minLocalGainFraction : Double = 0.1, minDistributedSamples : Int = 10000,
 			useSampleWeights : Int = 0,
 			initialNumTrees : Int = 0,
-			useArrays : Int = 0) : Array[Node] = {
-//		val residualSamples : RDD[Array[Double]] = samples.map(_.clone)
-//				// New. Create a copy of samples which will be modified over iterations.
-//				// Doesn't work as RDD cannot be updated/mutated, with or without caching.
+			useArrays : Int = 1, useCache : Int = 1) : Array[Node] = {
+		var residualSamples : RDD[Array[Double]] = samples
 		val rootNodes : Array[Node] = new Array(numTrees)
 		for (m <- 0 to numTrees - 1) {
 			println("    Training Tree # " + (m + initialNumTrees) + ".")
 			val initialTime : Long = System.currentTimeMillis
 			
-			// Old.
-			// TODO: Speed up by adding a initialResponse function argument
-			// to trainNode and splitNode in SparkRegressionTree so that
-			// all features need not be cloned.
-			val residualSamples = samples.map(sample => {
-					val residual : Double = sample(0) - 
-							GBRT.predict(sample, rootNodes.dropRight(numTrees - m))
-					val residualSample : Array[Double] = sample.clone
-						// Without clone, original sample is modified, which fails with cached samples.
-					residualSample(0) = residual
-					residualSample
-				})
-//			// New. Doesn't work as RDD cannot be updated/mutated, with or without caching.
-//			if (m > 0) {
-//				residualSamples.map(sample => {
-//					sample(0) = sample(0) - 
-//							RegressionTree.predict(sample, rootNodes(m-1))
-//				})
-//			}
-			
 			val rootNode = SparkRegressionTree.trainTree(residualSamples, featureTypes,
 					numValuesForFeatures, featureWeights, maxDepth, minGainFraction,
-					minLocalGainFraction, minDistributedSamples, useSampleWeights, useArrays)
+					minLocalGainFraction, minDistributedSamples, useSampleWeights,
+					useArrays, useCache)
 			GBRT.shrinkTree(rootNode, shrinkage)
 			rootNodes(m) = rootNode
+			
+			val oldResidualSamples = residualSamples
+			residualSamples = oldResidualSamples.map(sample => {
+					sample(0) = sample(0) - 
+							RegressionTree.predict(sample, rootNodes(m))
+					sample
+				})
+			if (useCache == 1) {
+				// residualSamples.persist(StorageLevel.MEMORY_AND_DISK)
+				// residualSamples.persist(StorageLevel.MEMORY_AND_DISK_SER)
+				// residualSamples.persist
+				// residualSamples.foreach(sample => {})  // Materialize before uncaching parent.
+				oldResidualSamples.unpersist(true)
+			}
 			
 			val finalTime : Long = System.currentTimeMillis
 			println("    Time taken = " + ((finalTime - initialTime) / 1000) + " s.")
