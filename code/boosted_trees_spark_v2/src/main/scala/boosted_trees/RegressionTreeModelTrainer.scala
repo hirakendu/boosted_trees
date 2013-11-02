@@ -93,11 +93,11 @@ object RegressionTreeModelTrainer {
 		// 1.2 Read data and index it.
 		
 		var indexes : Array[Map[String, Int]] = null
-		var samples : List[Array[Double]] = Nil
+		var samples : Array[Array[Double]] = null
 		if (useIndexedData == 0) {
 			// Index categorical features/fields and re-encode data.
-			indexes = Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
-			samples = Indexing.indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
+			indexes = Indexing.generateIndexes(dataFile, featureTypes)
+			samples = Indexing.indexRawData(dataFile, featureTypes, indexes)
 
 			// Save indexes and indexed data.
 			Indexing.saveIndexes(indexesDir, features, indexes)

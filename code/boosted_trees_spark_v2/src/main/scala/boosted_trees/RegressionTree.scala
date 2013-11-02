@@ -40,12 +40,12 @@ object RegressionTree {
 	// 1.1. Function for training a single node, i.e., finding best split
 	//      for a given dataset.
 	
-	def trainNode(node : Node, samples : List[Array[Double]],
+	def trainNode(node : Node, samples : Array[Array[Double]],
 			featureTypes : Array[Int], numValuesForFeatures : Array[Int],
 			featureWeights : Array[Double],
 			maxDepth : Int = 4, minGain : Double = 1e-6,
 			minLocalGainFraction : Double = 1, useSampleWeights: Int = 0) :
-			(List[Array[Double]], List[Array[Double]]) = {
+			(Array[Array[Double]], Array[Array[Double]]) = {
 		
 		// 0. Parameters.
 		val maxNumQuantileValues : Int = 1000  // Q-1. At least 1, i.e., Q >= 2.
@@ -83,10 +83,10 @@ object RegressionTree {
 		//    or other due to other termination criteria.
 		//    Additional criteria are used to stop the split further along.
 		if (node.numSamples < 2) {
-			return (Nil, Nil)
+			return (null, null)
 		}
 		if (node.id >= Math.pow(2, maxDepth)) {
-			return (Nil, Nil)
+			return (null, null)
 		}
 		
 		// 3. Find best split for each feature.
@@ -101,13 +101,13 @@ object RegressionTree {
 		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
 		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
 		val quantileSampleIds : Set[Long] = Utils.sampleWithoutReplacement(numSamples, numQuantileSamples)
-		val quantileSamples : List[Array[Double]] = samples.zipWithIndex.
-			filter(sampleId => quantileSampleIds.contains(sampleId._2)).map(_._1).toList
+		val quantileSamples : Array[Array[Double]] = samples.zipWithIndex.
+			filter(sampleId => quantileSampleIds.contains(sampleId._2)).map(_._1)
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			// Skip i = 0 corresponding to label.
 			if (featureTypes(j) == 0) {
-				val featureValues : List[Double] = quantileSamples.map(_(j)).sort(_ < _)
+				val featureValues : Array[Double] = quantileSamples.map(_(j)).sortWith(_ < _)
 				val candidateThresholdsSet : MuSet[Double] = MuSet()
 				for (q <- 1 to numQuantileValues) {
 					val id : Int = (q * numQuantileSamples / (numQuantileValues + 1.0) - 1).toInt
@@ -117,7 +117,7 @@ object RegressionTree {
 					}
 				}
 				candidateThresholdsForFeatures(j) =
-					candidateThresholdsSet.toList.sort(_ < _).toArray
+					candidateThresholdsSet.toArray.sortWith(_ < _)
 			}
 		// }
 		})  // End of j-loop for finding candidate thresholds for continuous features.
@@ -224,22 +224,22 @@ object RegressionTree {
 		//      Sort bins of discrete features by mean responses.
 		//		Note that we can read in parallel from
 		//		statsForFeatureBins.
-		val statsForBinsForFeatures: Array[List[(Int, Double, Double, Double)]] = new Array(numFeatures)
+		val statsForBinsForFeatures: Array[Array[(Int, Double, Double, Double)]] = new Array(numFeatures)
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
-			val statsForBins : List[(Int, Double, Double, Double)] =
+			val statsForBins : Array[(Int, Double, Double, Double)] =
 				statsForFeatureBins(j).zipWithIndex.
 					map(x => (x._2, x._1(0), x._1(1), x._1(2))).
-					filter(_._2 > 0). toList  // Filter is required to divide by counts.
+					filter(_._2 > 0)  // Filter is required to divide by counts.
 			if (featureTypes(j) == 0) {
 				// For continuous features, order by bin indices,
 				// i.e., order of quantiles.
-				statsForBinsForFeatures(j) = statsForBins.sort(_._1 < _._1)
+				statsForBinsForFeatures(j) = statsForBins.sortWith(_._1 < _._1)
 			} else if (featureTypes(j) == 1) {
 				// For categorical features, order by means of bins,
 				// i.e., order of means of values.
 				statsForBinsForFeatures(j) = statsForBins.
-						sort((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
+						sortWith((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
 			}
 		// }
 		})
@@ -248,7 +248,7 @@ object RegressionTree {
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			
-			val statsForBins : List[(Int, Double, Double, Double)] = statsForBinsForFeatures(j)
+			val statsForBins : Array[(Int, Double, Double, Double)] = statsForBinsForFeatures(j)
 			val numBins : Int = statsForBins.length
 			
 			// Initial split and error.
@@ -339,7 +339,7 @@ object RegressionTree {
 		
 		// 3.6. Don't split if no gain.
 		if (node.gain <= minGain + 1e-7 && node.gain <= minLocalGainFraction * node.error + 1e-7) {
-			return (Nil, Nil)
+			return (null, null)
 		}
 		
 		// 3.7. Split samples for left and right nodes
@@ -352,8 +352,8 @@ object RegressionTree {
 		node.rightChild.get.id = node.id * 2 + 1
 		node.leftChild.get.depth = node.depth + 1 
 		node.rightChild.get.depth = node.depth + 1
-		var leftSamples : List[Array[Double]] = Nil
-		var rightSamples : List[Array[Double]] = Nil
+		var leftSamples : Array[Array[Double]] = null
+		var rightSamples : Array[Array[Double]] = null
 		if (featureTypes(jMax) == 0) {
 			leftSamples = samples.filter(sample => sample(jMax) < node.threshold)
 			rightSamples = samples.filter(sample => sample(jMax) >= node.threshold)
@@ -370,7 +370,7 @@ object RegressionTree {
 	
 	// 1.2. Function for training a tree by recursively training/splitting nodes.
 	
-	def trainTree(samples: List[Array[Double]], featureTypes : Array[Int],
+	def trainTree(samples: Array[Array[Double]], featureTypes : Array[Int],
 			numValuesForFeatures : Array[Int], featureWeights : Array[Double],
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minLocalGainFraction : Double = 1,
@@ -399,13 +399,13 @@ object RegressionTree {
 		// Option 1: Recursive method may cause stack overflow.
 		// findBestSplitRecursive(rootNode)
 		// Option 2: Iterative by maintaining a queue.
-		val nodesStack : Stack[(Node,  List[Array[Double]])] = Stack()
+		val nodesStack : Stack[(Node,  Array[Array[Double]])] = Stack()
 		nodesStack.push((rootNode, samples))
 		while (!nodesStack.isEmpty) {
-			val (node, nodeSamples) : (Node,  List[Array[Double]]) = nodesStack.pop
+			val (node, nodeSamples) : (Node,  Array[Array[Double]]) = nodesStack.pop
 			println("      Training Node # " + node.id + ".")
 			val (leftSamples, rightSamples) :
-				(List[Array[Double]], List[Array[Double]]) =
+				(Array[Array[Double]], Array[Array[Double]]) =
 					trainNode(node, nodeSamples, featureTypes,
 							numValuesForFeatures, featureWeights,
 							maxDepth, minGain, minLocalGainFraction,

@@ -69,7 +69,7 @@ object DataIndexer {
 		println("\n  Generating/reading indexes.\n")
 		var indexes :  Array[Map[String,Int]] = null
 		if (generateIndexes == 1) {
-			indexes = Indexing.generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
+			indexes = Indexing.generateIndexes(dataFile, featureTypes)
 			Indexing.saveIndexes(indexesDir, features, indexes)
 		} else {
 			indexes = Indexing.readIndexes(indexesDir, features)
@@ -78,8 +78,8 @@ object DataIndexer {
 		// 1.4. Encode data and save indexed data.
 		if (encodeData == 1) {
 			println("\n  Encoding data.\n")
-			val samples : List[Array[Double]] =
-					Indexing.indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
+			val samples : Array[Array[Double]] =
+					Indexing.indexRawData(dataFile, featureTypes, indexes)
 			Indexing.saveIndexedData(indexedDataFile, samples, featureTypes)
 		}
 		

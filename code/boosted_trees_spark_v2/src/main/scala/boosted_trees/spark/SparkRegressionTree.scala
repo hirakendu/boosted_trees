@@ -115,12 +115,12 @@ object SparkRegressionTree {
 		val candidateThresholdsForFeatures : Array[Array[Double]] = new Array(numFeatures)
 		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
 		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
-		val quantileSamples : List[Array[Double]] = samples.takeSample(false, numQuantileSamples, 42).toList
+		val quantileSamples : Array[Array[Double]] = samples.takeSample(false, numQuantileSamples, 42)
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			// Skip i = 0 corresponding to label.
 			if (featureTypes(j) == 0) {
-				val featureValues : List[Double] = quantileSamples.map(_(j)).sort(_ < _)
+				val featureValues : Array[Double] = quantileSamples.map(_(j)).sortWith(_ < _)
 				val candidateThresholdsSet : MuSet[Double] = MuSet()
 				for (q <- 1 to numQuantileValues) {
 					val id : Int = (q * numQuantileSamples / (numQuantileValues + 1.0) - 1).toInt
@@ -130,7 +130,7 @@ object SparkRegressionTree {
 					}
 				}
 				candidateThresholdsForFeatures(j) =
-					candidateThresholdsSet.toList.sort(_ < _).toArray
+					candidateThresholdsSet.toArray.sortWith(_ < _)
 			}
 		// }
 		})  // End of j-loop for finding candidate thresholds for continuous features.
@@ -143,12 +143,12 @@ object SparkRegressionTree {
 		// 3.2. Find the stats (histogram, mean response, mean square response) 
 		//      for various feauture-value bins. Most data intensive.
 		
-		val statsForBinsForFeatures: Array[List[(Int, Double, Double, Double)]] = new Array(numFeatures)
+		val statsForBinsForFeatures: Array[Array[(Int, Double, Double, Double)]] = new Array(numFeatures)
 		
 		if (useArrays == 0) {
 		
 		// Method 1: giant reduceByKey, potentially doing smaller reduces on partitions implicitly.
-		val statsForFeatureBins : List[((Int, Int), (Double, Double, Double))] =
+		val statsForFeatureBins : Array[((Int, Int), (Double, Double, Double))] =
 			samples.flatMap(sample => {
 				var sampleStats : (Double, Double, Double) = (1, sample(0), sample(0) * sample(0))
 				if (useSampleWeights == 1) {
@@ -191,7 +191,7 @@ object SparkRegressionTree {
 			}).
 			reduceByKey((stats1, stats2) => (stats1._1 + stats2._1,
 						stats1._2 + stats2._2, stats1._3 + stats2._3)).
-			collect.toList
+			collect
 		
 		// Separate the histograms, means, and calculate errors.
 		// Sort bins of discrete features by mean responses.
@@ -199,7 +199,7 @@ object SparkRegressionTree {
 		// statsForFeatureBins.
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
-			val statsForBins : List[(Int, Double, Double, Double)] =
+			val statsForBins : Array[(Int, Double, Double, Double)] =
 				statsForFeatureBins.filter(_._1._1 == j).
 					map(statsForFeatureBin => (statsForFeatureBin._1._2,
 							statsForFeatureBin._2._1,
@@ -208,12 +208,12 @@ object SparkRegressionTree {
 			if (featureTypes(j) == 0) {
 				// For continuous features, order by bin indices,
 				// i.e., order of quantiles.
-				statsForBinsForFeatures(j) = statsForBins.sort(_._1 < _._1)
+				statsForBinsForFeatures(j) = statsForBins.sortWith(_._1 < _._1)
 			} else if (featureTypes(j) == 1) {
 				// For categorical features, order by means of bins,
 				// i.e., order of means of values.
 				statsForBinsForFeatures(j) = statsForBins.
-						sort((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
+						sortWith((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
 			}
 		// }
 		})
@@ -372,19 +372,19 @@ object SparkRegressionTree {
 		// statsForFeatureBins.
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
-			val statsForBins : List[(Int, Double, Double, Double)] =
+			val statsForBins : Array[(Int, Double, Double, Double)] =
 				statsForFeatureBins(j).zipWithIndex.
 					map(x => (x._2, x._1(0), x._1(1), x._1(2))).
-					filter(_._2 > 0). toList  // Filter is required to divide by counts.
+					filter(_._2 > 0)  // Filter is required to divide by counts.
 			if (featureTypes(j) == 0) {
 				// For continuous features, order by bin indices,
 				// i.e., order of quantiles.
-				statsForBinsForFeatures(j) = statsForBins.sort(_._1 < _._1)
+				statsForBinsForFeatures(j) = statsForBins.sortWith(_._1 < _._1)
 			} else if (featureTypes(j) == 1) {
 				// For categorical features, order by means of bins,
 				// i.e., order of means of values.
 				statsForBinsForFeatures(j) = statsForBins.
-						sort((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
+						sortWith((stats1, stats2) => stats1._3/stats1._2 < stats2._3/stats2._2)
 			}
 		// }
 		})
@@ -402,7 +402,7 @@ object SparkRegressionTree {
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
 			
-			val statsForBins : List[(Int, Double, Double, Double)] = statsForBinsForFeatures(j)
+			val statsForBins : Array[(Int, Double, Double, Double)] = statsForBinsForFeatures(j)
 			val numBins : Int = statsForBins.length
 			
 			// Initial split and error.
@@ -584,7 +584,7 @@ object SparkRegressionTree {
 				println("      Training Node # " + node.id + " (local).")
 				val (leftSamplesList, rightSamplesList) :
 					(List[Array[Double]], List[Array[Double]]) =
-						RegressionTree.trainNode(node, nodeSamples.collect.toList,
+						RegressionTree.trainNode(node, nodeSamples.collect,
 								featureTypes, numValuesForFeatures, featureWeights,
 								maxDepth, minGain, minLocalGainFraction, useSampleWeights)
 				if (!node.isLeaf) {

@@ -190,8 +190,8 @@ object SparkRegressionTreeErrorAnalyzer {
 		// 2.1 Samples for scatter plot.
 		
 		val numSummarySamples : Int = Math.min(maxNumSummarySamples, testSamples.count).toInt
-		val summarySamples : List[Array[Double]] = testSamples.takeSample(false, numSummarySamples, 42).toList
-		val predictedVsActual : List[(Double, Double)] = summarySamples.map(testSample => 
+		val summarySamples : Array[Array[Double]] = testSamples.takeSample(false, numSummarySamples, 42)
+		val predictedVsActual : Array[(Double, Double)] = summarySamples.map(testSample => 
 					(RegressionTree.predict(testSample, rootNode), testSample(0)))
 		
 		
@@ -200,7 +200,7 @@ object SparkRegressionTreeErrorAnalyzer {
 		var roc : Array[(Double, Double, Double)] = null
 		var auc : Double = 0
 		if (binaryMode == 1) {
-			val scoresLabels : List[(Double, Int)] = predictedVsActual.map(x => (x._1, x._2.toInt))
+			val scoresLabels : Array[(Double, Int)] = predictedVsActual.map(x => (x._1, x._2.toInt))
 			val rocAuc = Utils.findRocAuc(scoresLabels)
 			roc = rocAuc._1
 			auc = rocAuc._2

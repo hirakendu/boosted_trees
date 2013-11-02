@@ -114,7 +114,7 @@ object SparkIndexing {
 			indexes : Array[Map[String, Int]]) : Unit = {
 		for (j <- 0 to features.length - 1) {
 			if (features(j).endsWith("$")) {
-				val index : RDD[String] = sc.parallelize(indexes(j).toList.sort(_._2 < _._2).
+				val index : RDD[String] = sc.parallelize(indexes(j).toArray.sortWith(_._2 < _._2).
 						map(valueId => valueId._1.toString + "\t" + valueId._2), 1)
 				index.saveAsTextFile(indexesDir + "/" +
 								features(j).replace("$", "") + "_index.txt")

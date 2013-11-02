@@ -318,7 +318,7 @@ For examples, we assume that the `${JARS}` folder contains
           boosted_trees.GBRTDetailsPrinter \
           --header-file ${WORK}/header.txt \
           --indexes-dir ${WORK}/indexing/indexes \
-          --model-dir ${WORK}/forest/
+          --model-dir ${WORK}/forest
           
  14. **GBRT DOT printer**: prints Graphviz DOT files that
     illustrates the trees in a forest model.
@@ -327,7 +327,7 @@ For examples, we assume that the `${JARS}` folder contains
         time scala -cp ${JARS}/boosted_trees_spark-spark.jar \
           boosted_trees.GBRTDotPrinter \
           --header-file ${WORK}/header.txt \
-          --model-dir ${WORK}/forest/
+          --model-dir ${WORK}/forest
 
 ### Distributed Spark programs
 

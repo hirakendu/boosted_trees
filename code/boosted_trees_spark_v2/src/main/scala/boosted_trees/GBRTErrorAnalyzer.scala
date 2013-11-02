@@ -92,15 +92,14 @@ object GBRTErrorAnalyzer {
 				
 		// 1.3. Read data.
 		
-		var testSamples : List[Array[Double]] = Nil
+		var testSamples : Array[Array[Double]] = null
 		
 		if (useIndexedData == 0) {
 			// Read indexes for categorical features.
 			val indexes : Array[Map[String, Int]] = Indexing.readIndexes(indexesDir, features)
 			
 			// Read data and encode categorical features.
-			testSamples = Indexing.indexRawData(
-					Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
+			testSamples = Indexing.indexRawData(dataFile, featureTypes, indexes)
 					
 			// Save indexed data.
 			if (saveIndexedData == 1) {
@@ -148,9 +147,9 @@ object GBRTErrorAnalyzer {
 		val numSummarySamples : Int = Math.min(maxNumSummarySamples, testSamples.length)
 		val summarySampleIds : Set[Long] =
 				Utils.sampleWithoutReplacement(testSamples.length, numSummarySamples)
-		val summarySamples : List[Array[Double]] = testSamples.par.zipWithIndex.
-				filter(sampleId => summarySampleIds.contains(sampleId._2)).map(_._1).toList
-		val predictedVsActual : List[(Double, Double)] = summarySamples.map(testSample => 
+		val summarySamples : Array[Array[Double]] = testSamples.zipWithIndex.
+				filter(sampleId => summarySampleIds.contains(sampleId._2)).map(_._1)
+		val predictedVsActual : Array[(Double, Double)] = summarySamples.map(testSample => 
 					(GBRT.predict(testSample, rootNodes), testSample(0)))
 					
 					
@@ -159,7 +158,7 @@ object GBRTErrorAnalyzer {
 		var roc : Array[(Double, Double, Double)] = null
 		var auc : Double = 0
 		if (binaryMode == 1) {
-			val scoresLabels : List[(Double, Int)] = predictedVsActual.map(x => (x._1, x._2.toInt))
+			val scoresLabels : Array[(Double, Int)] = predictedVsActual.map(x => (x._1, x._2.toInt))
 			val rocAuc = Utils.findRocAuc(scoresLabels)
 			roc = rocAuc._1
 			auc = rocAuc._2

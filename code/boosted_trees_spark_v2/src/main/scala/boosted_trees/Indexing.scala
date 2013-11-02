@@ -35,24 +35,17 @@ object Indexing {
 	// 1. Functions for generating indexes/dictionaries for categorical
 	//      features in a dataset.
 	
-	def generateIndexes(rawSamplesIterator : Iterator[String], featureTypes : Array[Int]) :
+	def generateIndexes(rawSamples : Array[String], featureTypes : Array[Int]) :
 		Array[Map[String, Int]] = {
 		
 		// 1. Find the set of unique values, i.e., dictionary
 		//    for each categorical feature.
-		val rawValuesForFeatures : Array[MuSet[String]] = new Array(featureTypes.length)
+		val rawValuesForFeatures : Array[Set[String]] = new Array(featureTypes.length)
+		
+		val rawSamplesSplit : Array[Array[String]] = rawSamples.map(_.split("\t", -1))
 		for (j <- 1 to featureTypes.length - 1) {
 			if (featureTypes(j) == 1) {
-				rawValuesForFeatures(j) = MuSet()
-			}
-		}
-		
-		while (rawSamplesIterator.hasNext) {
-			val values : Array[String] = rawSamplesIterator.next.split("\t", -1)
-			for (j <- 1 to featureTypes.length - 1) {
-				if (featureTypes(j) == 1) {
-					rawValuesForFeatures(j) += values(j)
-				}
+				rawValuesForFeatures(j) = rawSamplesSplit.map(_(j)).toSet
 			}
 		}
 		
@@ -69,7 +62,7 @@ object Indexing {
 	}
 	
 	def generateIndexes(dataFile : String, featureTypes : Array[Int]) : Array[Map[String, Int]] = {
-		generateIndexes(Source.fromFile(new File(dataFile)).getLines, featureTypes)
+		generateIndexes(Source.fromFile(new File(dataFile)).getLines.toArray, featureTypes)
 	}
 	
 	
@@ -80,7 +73,7 @@ object Indexing {
 		(new File(indexesDir)).mkdirs
 		for (j <- 0 to features.length - 1) {
 			if (features(j).endsWith("$")) {
-				val lines : List[String] = indexes(j).toList.sort(_._2 < _._2).
+				val lines : Array[String] = indexes(j).toArray.sortWith(_._2 < _._2).
 						map(valueId => valueId._1.toString + "\t" + valueId._2)
 				(new File(indexesDir)).mkdirs
 				val printWriter : PrintWriter = new PrintWriter(new File(indexesDir + "/" +
@@ -93,9 +86,9 @@ object Indexing {
 		}
 	}
 	
-	def saveIndexedData(indexedDataFile : String, samples : List[Array[Double]],
+	def saveIndexedData(indexedDataFile : String, samples : Array[Array[Double]],
 			featureTypes : Array[Int]) : Unit = {
-		val lines : List[String] = samples.map(sample => {
+		val lines : Array[String] = samples.map(sample => {
 			var sampleStr : String = sample(0).toString
 			for (j <- 1 to featureTypes.length - 1) {
 				sampleStr += "\t"
@@ -109,9 +102,7 @@ object Indexing {
 		})
 		Utils.createParentDirs(indexedDataFile)
 		val printWriter : PrintWriter = new PrintWriter(new File(indexedDataFile))
-		for (line <- lines) {
-			printWriter.println(line)
-		}
+		printWriter.println(lines.mkString("\n"))
 		printWriter.close
 	}
 	
@@ -132,9 +123,9 @@ object Indexing {
 		indexes
 	}
 	
-	def readIndexedData(indexedDataFile : String) : List[Array[Double]] = {
+	def readIndexedData(indexedDataFile : String) : Array[Array[Double]] = {
 		Source.fromFile(new File(indexedDataFile)).getLines.
-					toArray.toList.map(_.split("\t").map(_.toDouble))
+					toArray.map(_.split("\t").map(_.toDouble))
 	}
 	
 	// 3. Function for indexing a single raw sample, i.e.,
@@ -166,21 +157,13 @@ object Indexing {
 		sample
 	}
 	
-	// 4. Functions for batch encoding the categorical features in a dataset 
+	// 4. Function for batch encoding the categorical features in a dataset 
 	//    using the provided indexes/dictionaries.
 	
-	def indexRawData(rawSamplesIterator : Iterator[String], featureTypes : Array[Int],
-			indexes : Array[Map[String, Int]]) : List[Array[Double]] = {
-		val samples : MutableList[Array[Double]] = MutableList()
-		while (rawSamplesIterator.hasNext) {
-			samples += indexRawSample(rawSamplesIterator.next, featureTypes, indexes)
-		}
-		samples.toList
-	}
-	
 	def indexRawData(dataFile : String, featureTypes : Array[Int],
-			indexes : Array[Map[String, Int]]) : List[Array[Double]] = {
-		indexRawData(Source.fromFile(new File(dataFile)).getLines, featureTypes, indexes)
+			indexes : Array[Map[String, Int]]) : Array[Array[Double]] = {
+		Source.fromFile(new File(dataFile)).getLines.toArray.map(
+				indexRawSample(_, featureTypes, indexes))
 	}
 
 }

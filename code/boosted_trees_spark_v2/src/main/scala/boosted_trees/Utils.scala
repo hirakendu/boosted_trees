@@ -107,8 +107,8 @@ object Utils {
 	
 	// 4. Function for computing ROC and AUC.
 	
-	def findRocAuc(scoresLabels : List[(Double, Int)]) : (Array[(Double, Double, Double)], Double) = {
-		val sortedScoresLabels : Array[(Double, Int)] = scoresLabels.sort(_._2 < _._2).toArray
+	def findRocAuc(scoresLabels : Array[(Double, Int)]) : (Array[(Double, Double, Double)], Double) = {
+		val sortedScoresLabels : Array[(Double, Int)] = scoresLabels.sortWith(_._2 < _._2)
 		Sorting.stableSort(sortedScoresLabels, (x : (Double, Int), y : (Double, Int)) => (x._1 > y._1))
 		val numZeros : Double = scoresLabels.filter(_._2 == 0).length
 		val numOnes : Double = scoresLabels.filter(_._2 == 1).length

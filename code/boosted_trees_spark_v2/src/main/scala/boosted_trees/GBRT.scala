@@ -52,13 +52,13 @@ object GBRT {
 	
 	// 1.2. Function for training a forest of trees using gradient boosting.
 	
-	def trainForest(samples : List[Array[Double]], featureTypes : Array[Int],
+	def trainForest(samples : Array[Array[Double]], featureTypes : Array[Int],
 			numValuesForFeatures : Array[Int], featureWeights : Array[Double],
 			numTrees : Int = 5, shrinkage : Double = 0.8,
 			maxDepth : Int = 4, minGainFraction : Double = 0.01,
 			minLocalGainFraction : Double = 1,
 			useSampleWeights : Int = 0) : Array[Node] = {
-		val residualSamples : List[Array[Double]] = samples.par.map(_.clone).toList
+		val residualSamples : Array[Array[Double]] = samples.map(_.clone)
 				// Create a copy of samples which will be modified over iterations.
 		val rootNodes : Array[Node] = new Array(numTrees)
 		for (m <- 0 to numTrees - 1) {
@@ -75,7 +75,7 @@ object GBRT {
 //			}).toList
 			// New.
 			if (m > 0) {
-				residualSamples.par.map(sample => {
+				residualSamples.map(sample => {
 					sample(0) = sample(0) - 
 							RegressionTree.predict(sample, rootNodes(m-1))
 				})
