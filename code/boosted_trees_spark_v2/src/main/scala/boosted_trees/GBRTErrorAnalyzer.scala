@@ -144,7 +144,7 @@ object GBRTErrorAnalyzer {
 		
 		// 2.1 Samples for scatter plot.
 		
-		val numSummarySamples : Int = Math.min(maxNumSummarySamples, testSamples.length)
+		val numSummarySamples : Int = math.min(maxNumSummarySamples, testSamples.length)
 		val summarySampleIds : Set[Long] =
 				Utils.sampleWithoutReplacement(testSamples.length, numSummarySamples)
 		val summarySamples : Array[Array[Double]] = testSamples.zipWithIndex.

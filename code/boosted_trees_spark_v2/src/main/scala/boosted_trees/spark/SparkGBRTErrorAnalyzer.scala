@@ -31,7 +31,7 @@ object SparkGBRTErrorAnalyzer {
 		var maxNumSummarySamples : Int = 100000
 		var useIndexedData : Int = 0
 		var saveIndexedData : Int = 0
-		var cacheIndexedData : Int = 0
+		var useCache : Int = 0
 		
 		// 0.1. Read parameters.
 		
@@ -92,9 +92,9 @@ object SparkGBRTErrorAnalyzer {
 			} else if (("--save-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
 				saveIndexedData = xargs(argi).toInt
-			} else if (("--cache-indexed-data".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
+			} else if (("--use-cache".equals(xargs(argi))) && (argi + 1 < xargs.length)) {
 				argi += 1
-				cacheIndexedData = xargs(argi).toInt
+				useCache = xargs(argi).toInt
 			} else {
 				println("\n  Error parsing argument \"" + xargs(argi) +
 						"\".\n")
@@ -147,7 +147,7 @@ object SparkGBRTErrorAnalyzer {
 			testSamples = SparkIndexing.readIndexedData(sc, indexedDataFile)
 		}
 		
-		if (cacheIndexedData == 1) {
+		if (useCache == 1) {
 			testSamples.cache
 		}
 		
@@ -185,7 +185,7 @@ object SparkGBRTErrorAnalyzer {
 		
 		// 2.1 Samples for scatter plot.
 		
-		val numSummarySamples : Int = Math.min(maxNumSummarySamples, testSamples.count).toInt
+		val numSummarySamples : Int = math.min(maxNumSummarySamples, testSamples.count).toInt
 		val summarySamples : Array[Array[Double]] = testSamples.takeSample(false, numSummarySamples, 42)
 		val predictedVsActual : Array[(Double, Double)] = summarySamples.map(testSample => 
 					(GBRT.predict(testSample, rootNodes), testSample(0)))

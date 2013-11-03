@@ -64,7 +64,7 @@ object Utils {
 		var str = ""
 		v match {
 			case Nil => str
-			case _ : Iterable[Double] => for (e <- v.zipWithIndex) {
+			case _ => for (e <- v.zipWithIndex) {
 				if (e._2 != 0) {
 					str += delimiter
 				}
@@ -84,7 +84,7 @@ object Utils {
 		var str = ""
 		v match {
 			case Nil => str
-			case _ : Iterable[Double] => for (e <- v.zipWithIndex) {
+			case _ => for (e <- v.zipWithIndex) {
 				if (e._2 != 0) {
 					str += delimiter
 				}

@@ -64,7 +64,7 @@ object GBRT {
 		for (m <- 0 to numTrees - 1) {
 			println("    Training Tree # " + m + ".")
 //			// Old.
-//			val residualSamples : List[Array[Double]] = samples.par.map(sample => {
+//			val residualSamples : Array[Array[Double]] = samples.map(sample => {
 //				val residual : Double = sample(0) - 
 //						GBRT.predict(sample, rootNodes.dropRight(numTrees - m))
 //				val residualSample : Array[Double] = sample.clone
@@ -72,7 +72,7 @@ object GBRT {
 //					// May remove for performance.
 //				residualSample(0) = residual
 //				residualSample
-//			}).toList
+//			})
 			// New.
 			if (m > 0) {
 				residualSamples.map(sample => {
@@ -138,7 +138,7 @@ object GBRT {
 	
 	// 3.1. Evaluate feature subset gains.
 	
-	def evaluateFeatureSubsetGains(rootNodes : Array[Node]) : List[(Set[Int], Double)] = {
+	def evaluateFeatureSubsetGains(rootNodes : Array[Node]) : Array[(Set[Int], Double)] = {
 		val subsetGains : MuMap[Set[Int], Double] = MuMap()
 		for (m <- 0 to rootNodes.length - 1) {
 			val treeSubsetGains :  Map[Set[Int], Double] =
@@ -152,9 +152,9 @@ object GBRT {
 				}
 			}
 		}
-		// val maxGain : Double =  subsetGains.toList.map(_._2).max
-		// subsetGains.toList.sort(_._2 > _._2).map(x => (x._1, x._2 * 100 / maxGain))
-		subsetGains.toList.sort(_._2 > _._2)
+		// val maxGain : Double =  subsetGains.toArray.map(_._2).max
+		// subsetGains.toArray.sortWith(_._2 > _._2).map(x => (x._1, x._2 * 100 / maxGain))
+		subsetGains.toArray.sortWith(_._2 > _._2)
 	}
 	
 	// 4. Functions for saving and printing a forest model.

@@ -44,10 +44,10 @@ object BinaryDataGenerator {
 		// 1. Threshold data into binary.
 		
 		// 1.1. Read data.
-		val samples : List[String] = Source.fromFile(new File(dataFile)).getLines.toArray.toList
+		val samples : Array[String] = Source.fromFile(new File(dataFile)).getLines.toArray
 		
 		// 1.2. Generate binary responses for samples.
-		val binarySamples : List[String] = samples.par.map(sample => {
+		val binarySamples : Array[String] = samples.map(sample => {
 				val values : Array[String] =  sample.split("\t")
 				val response : Double = values(0).toDouble
 				var b : Int = 0
@@ -55,13 +55,11 @@ object BinaryDataGenerator {
 					b = 1
 				}
 				b + "\t" + values.drop(1).mkString("\t")
-			}).toList
+			})
 		
 		// 1.3. Save binary data.
 		val printWriter : PrintWriter = new PrintWriter(new File(binaryDataFile))
-		for (line <- binarySamples) {
-			printWriter.println(line)
-		}
+		printWriter.println(binarySamples.mkString("\n"))
 		printWriter.close
 		
 	}

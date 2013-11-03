@@ -85,7 +85,7 @@ object RegressionTree {
 		if (node.numSamples < 2) {
 			return (null, null)
 		}
-		if (node.id >= Math.pow(2, maxDepth)) {
+		if (node.id >= math.pow(2, maxDepth)) {
 			return (null, null)
 		}
 		
@@ -98,8 +98,8 @@ object RegressionTree {
 		
 		// 3.1. Find the candidate thresholds for continuous features.
 		val candidateThresholdsForFeatures : Array[Array[Double]] = new Array(numFeatures)
-		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
-		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
+		val numQuantileSamples : Int = math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
+		val numQuantileValues : Int = math.min(maxNumQuantileValues, numQuantileSamples - 1)
 		val quantileSampleIds : Set[Long] = Utils.sampleWithoutReplacement(numSamples, numQuantileSamples)
 		val quantileSamples : Array[Array[Double]] = samples.zipWithIndex.
 			filter(sampleId => quantileSampleIds.contains(sampleId._2)).map(_._1)
@@ -125,7 +125,7 @@ object RegressionTree {
 		// 3.2. Find the stats (histogram, mean response, mean square response) 
 		//      for various feauture-value bins. Most data intensive.
 //		// Old method: giant reduce.
-//		val statsForFeatureBins : List[((Int, Int), (Long, Double, Double))] =
+//		val statsForFeatureBins : Array[((Int, Int), (Long, Double, Double))] =
 //			samples.flatMap(sample => {
 //				val square : Double = sample(0) * sample(0)
 //				val valueBinsForFeatures : Array[Int] = new Array(numFeatures)
@@ -164,7 +164,7 @@ object RegressionTree {
 //					}
 //				}
 //				merged
-//			}).toList
+//			}).toArray
 		
 		// New method. Iterative reduce.
 		val statsForFeatureBins : Array[Array[Array[Double]]] = new Array(numFeatures)
@@ -175,7 +175,7 @@ object RegressionTree {
 				statsForFeatureBins(j) = new Array(numValuesForFeatures(j))
 			}
 			for (b <- 0 to statsForFeatureBins(j).length - 1) {
-				statsForFeatureBins(j)(b) = Array(0, 0, 0)	
+				statsForFeatureBins(j)(b) = Array(0, 0, 0)
 			}
 		}
 		for (sample <- samples) {
@@ -402,7 +402,7 @@ object RegressionTree {
 		val nodesStack : Stack[(Node,  Array[Array[Double]])] = Stack()
 		nodesStack.push((rootNode, samples))
 		while (!nodesStack.isEmpty) {
-			val (node, nodeSamples) : (Node,  Array[Array[Double]]) = nodesStack.pop
+			val (node, nodeSamples) = nodesStack.pop
 			println("      Training Node # " + node.id + ".")
 			val (leftSamples, rightSamples) :
 				(Array[Array[Double]], Array[Array[Double]]) =
@@ -482,7 +482,7 @@ object RegressionTree {
 	
 	// 3.1. Evaluate feature subset gains.
 	
-	def evaluateFeatureSubsetGains(rootNode : Node) : List[(Set[Int], Double)] = {
+	def evaluateFeatureSubsetGains(rootNode : Node) : Array[(Set[Int], Double)] = {
 		val featureSubsetNodes : MuMap[Set[Int], MuSet[Node]] = MuMap()
 		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
@@ -505,9 +505,9 @@ object RegressionTree {
 				nodesStack.push(node.leftChild.get)
 			}
 		}
-		val featureSubsetGains : List[(Set[Int], Double)] =
-			featureSubsetNodes.toList.map(x => (x._1, x._2.map(_.gain).sum)).
-			sort(_._2 > _._2)
+		val featureSubsetGains : Array[(Set[Int], Double)] =
+			featureSubsetNodes.toArray.map(x => (x._1, x._2.map(_.gain).sum)).
+			sortWith(_._2 > _._2)
 		// val maxGain : Double = featureSubsetGains.map(_._2).max
 		// featureSubsetGains.map(x => (x._1, x._2 * 100 / maxGain))
 		featureSubsetGains
@@ -518,7 +518,7 @@ object RegressionTree {
 	
 	// 4.1. Functions to save a tree model in text format for later use.
 	
-	def saveTree(rootNode : Node) : List[String] = {
+	def saveTree(rootNode : Node) : Array[String] = {
 		val lines : MutableList[String] = MutableList()
 		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
@@ -543,9 +543,9 @@ object RegressionTree {
 				} else {
 					// Discrete feature.
 					lines += "left_values\t" +
-							node.leftValues.toList.sort(_ < _).mkString(",")
+							node.leftValues.toArray.sortWith(_ < _).mkString(",")
 					lines += "right_values\t" +
-							node.rightValues.toList.sort(_ < _).mkString(",")
+							node.rightValues.toArray.sortWith(_ < _).mkString(",")
 				}
 			}
 
@@ -555,16 +555,14 @@ object RegressionTree {
 				nodesStack.push(node.leftChild.get)
 			}
 		}
-		lines.toList
+		lines.toArray
 	}
 	
 	def saveTree(nodesFile : String, rootNode : Node) : Unit = {
-		val lines : List[String] = saveTree(rootNode)
+		val lines : Array[String] = saveTree(rootNode)
 		Utils.createParentDirs(nodesFile)
 		val printWriter : PrintWriter = new PrintWriter(new File(nodesFile))
-		for (line <- lines) {
-			printWriter.println(line)
-		}
+		printWriter.println(lines.mkString("\n"))
 		printWriter.close
 	}
 	
@@ -582,8 +580,8 @@ object RegressionTree {
 			if (node.featureType == 0) {
 				line += "%.3f".format(node.threshold)
 			} else {
-				line += "{" + node.leftValues.toList.sorted.mkString(",") + "} : {" +
-						node.rightValues.toList.sorted.mkString(",") + "}"
+				line += "{" + node.leftValues.toArray.sorted.mkString(",") + "} : {" +
+						node.rightValues.toArray.sorted.mkString(",") + "}"
 			}
 		}
 		line
@@ -607,10 +605,10 @@ object RegressionTree {
 					delimiter += "  "
 				}
 				line += "{" +
-						node.leftValues.toList.map(reverseIndexes(node.featureId)(_)).
+						node.leftValues.toArray.map(reverseIndexes(node.featureId)(_)).
 							sorted.mkString(delimiter) +
 						"} : {" +
-						node.rightValues.toList.map(reverseIndexes(node.featureId)(_)).
+						node.rightValues.toArray.map(reverseIndexes(node.featureId)(_)).
 							sorted.mkString(delimiter) +
 						"}"
 			}
@@ -618,7 +616,7 @@ object RegressionTree {
 		line
 	}
 	
-	def printTree(rootNode : Node) : List[String] = {
+	def printTree(rootNode : Node) : Array[String] = {
 		val lines : MutableList[String] = MutableList()
 		val nodesStack : Stack[Node] = Stack()
 		nodesStack.push(rootNode)
@@ -630,15 +628,15 @@ object RegressionTree {
 				nodesStack.push(node.leftChild.get)
 			}
 		}
-		lines.toList
+		lines.toArray
 	}
 	
 	def printTree(rootNode : Node, features : Array[String],
-			indexes : Array[Map[String, Int]]) : List[String] = {
+			indexes : Array[Map[String, Int]]) : Array[String] = {
 		val reverseIndexes : Array[Map[Int, String]] = new Array(features.length)
 		for (j <- 1 to features.length - 1) {
 			if (features(j).endsWith("$")) {
-				reverseIndexes(j) = indexes(j).toList.map(valueId => (valueId._2, valueId._1)).toMap
+				reverseIndexes(j) = indexes(j).toArray.map(valueId => (valueId._2, valueId._1)).toMap
 			}
 		}
 		val lines : MutableList[String] = MutableList()
@@ -652,27 +650,23 @@ object RegressionTree {
 				nodesStack.push(node.leftChild.get)
 			}
 		}
-		lines.toList
+		lines.toArray
 	}
 	
 	def printTree(treeFile : String, rootNode : Node) : Unit = {
-		val lines : List[String] = printTree(rootNode)
+		val lines : Array[String] = printTree(rootNode)
 		Utils.createParentDirs(treeFile)
 		val printWriter : PrintWriter = new PrintWriter(new File(treeFile))
-		for (line <- lines) {
-			printWriter.println(line)
-		}
+		printWriter.println(lines.mkString("\n"))
 		printWriter.close
 	}
 	
 	def printTree(treeFile : String, rootNode : Node, features : Array[String],
 			indexes : Array[Map[String, Int]]) : Unit = {
-		val lines : List[String] = printTree(rootNode, features, indexes)
+		val lines : Array[String] = printTree(rootNode, features, indexes)
 		Utils.createParentDirs(treeFile)
 		val printWriter : PrintWriter = new PrintWriter(new File(treeFile))
-		for (line <- lines) {
-			printWriter.println(line)
-		}
+		printWriter.println(lines.mkString("\n"))
 		printWriter.close
 	}
 	
@@ -692,10 +686,10 @@ object RegressionTree {
 				nodeDetails += "t = " + node.threshold + "\n"
 			} else if (node.featureType == 1) {
 				nodeDetails += "t = {" +
-						node.leftValues.toList.map(reverseIndexes(node.featureId)(_)).
+						node.leftValues.toArray.map(reverseIndexes(node.featureId)(_)).
 							sorted.mkString(",") +
 						"} : {" +
-						node.rightValues.toList.map(reverseIndexes(node.featureId)(_)).
+						node.rightValues.toArray.map(reverseIndexes(node.featureId)(_)).
 							sorted.mkString(",") +
 						"}\n"
 			}
@@ -725,10 +719,10 @@ object RegressionTree {
 			} else if (parentNode.featureType == 1) {
 				nodeDetails += " <- {"
 				if (orientation == 0) {
-					nodeDetails += parentNode.leftValues.toList.sort(_ < _).
+					nodeDetails += parentNode.leftValues.toArray.sortWith(_ < _).
 							map(reverseIndexes(parentNode.featureId)(_)).mkString(",")
 				} else {
-					nodeDetails += parentNode.rightValues.toList.sort(_ < _).
+					nodeDetails += parentNode.rightValues.toArray.sortWith(_ < _).
 							map(reverseIndexes(parentNode.featureId)(_)).mkString(",")
 				}
 				nodeDetails += "}\n"
@@ -743,7 +737,7 @@ object RegressionTree {
 		val reverseIndexes : Array[Map[Int, String]] = new Array(features.length)
 		for (j <- 1 to features.length - 1) {
 			if (features(j).endsWith("$")) {
-				reverseIndexes(j) = indexes(j).toList.map(valueId => (valueId._2, valueId._1)).toMap
+				reverseIndexes(j) = indexes(j).toArray.map(valueId => (valueId._2, valueId._1)).toMap
 			}
 		}
 		val nodesDetails : MutableList[(Int, String)] = MutableList()

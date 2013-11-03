@@ -90,7 +90,7 @@ object SparkWeightedDataGenerator {
 										// .first.split("\t")
 		
 		// 1.2. Read weight steps.
-		val weightStepsLines : List[String] = SparkUtils.readSmallFile(sc, weightStepsFile).toList
+		val weightStepsLines : Array[String] = SparkUtils.readSmallFile(sc, weightStepsFile)
 		val weightSteps : MutableList[(Double, Double)] = MutableList()
 		for (s <- 0 to (weightStepsLines.length  - 3) / 2) {
 			weightSteps += ((weightStepsLines(2 * s + 1).toDouble, weightStepsLines(2 * s).toDouble))
@@ -114,7 +114,7 @@ object SparkWeightedDataGenerator {
 		
 		// 1.5. Save weighted data and header.
 		weightedSamples.saveAsTextFile(weightedDataFile)
-		sc.parallelize(features.toList ++ List("sample_weight"), 1).
+		sc.parallelize(features.toArray ++ Array("sample_weight"), 1).
 			saveAsTextFile(weightedDataHeaderFile)
 		
 	}

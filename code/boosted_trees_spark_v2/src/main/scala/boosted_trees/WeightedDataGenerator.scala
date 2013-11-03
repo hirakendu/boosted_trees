@@ -57,7 +57,7 @@ object WeightedDataGenerator {
 				getLines.toArray
 		
 		// 1.2. Read weight steps.
-		val weightStepsLines : List[String] = Source.fromFile(new File(weightStepsFile)).getLines.toList
+		val weightStepsLines : Array[String] = Source.fromFile(new File(weightStepsFile)).getLines.toArray
 		val weightSteps : MutableList[(Double, Double)] = MutableList()
 		for (s <- 0 to (weightStepsLines.length  - 3) / 2) {
 			weightSteps += ((weightStepsLines(2 * s + 1).toDouble, weightStepsLines(2 * s).toDouble))
@@ -65,10 +65,10 @@ object WeightedDataGenerator {
 		weightSteps += ((9000, weightStepsLines(weightStepsLines.length - 1).toDouble))
 		
 		// 1.3. Read data.
-		val samples : List[String] = Source.fromFile(new File(dataFile)).getLines.toArray.toList
+		val samples : Array[String] = Source.fromFile(new File(dataFile)).getLines.toArray.toArray
 		
 		// 1.4. Generate weighted samples.
-		val weightedSamples : List[String] = samples.par.map(sample => {
+		val weightedSamples : Array[String] = samples.map(sample => {
 				val response : Double = sample.split("\t")(0).toDouble
 				var sampleWeight : Double = weightSteps(weightSteps.length - 1)._2
 				for (s <- 0 to weightSteps.length - 2) {
@@ -77,7 +77,7 @@ object WeightedDataGenerator {
 					}
 				}
 				sample + "\t" + sampleWeight
-			}).toList
+			})
 		
 		// 1.5. Save weighted data and header.
 		var printWriter : PrintWriter = new PrintWriter(new File(weightedDataHeaderFile))

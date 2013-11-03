@@ -34,7 +34,7 @@ object SparkUtils {
 			Runtime.getRuntime.exec(Array("/bin/bash", "-c",
 					hadoopCommand + " fs -cat " + file + " > " + tempDir + "/file.txt")).waitFor
 		}
-		lines = Source.fromFile(new File(tempDir + "/file.txt")).getLines.toList.toArray
+		lines = Source.fromFile(new File(tempDir + "/file.txt")).getLines.toArray
 		Runtime.getRuntime.exec("rm -rf " + tempDir + "/is_directory.txt "
 				+ tempDir + "/file.txt").waitFor
 		lines

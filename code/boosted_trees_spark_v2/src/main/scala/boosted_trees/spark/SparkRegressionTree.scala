@@ -98,7 +98,7 @@ object SparkRegressionTree {
 		if (node.numSamples < 2) {
 			return (null, null)
 		}
-		if (node.id >= Math.pow(2, maxDepth)) {
+		if (node.id >= math.pow(2, maxDepth)) {
 			return (null, null)
 		}
 		
@@ -113,8 +113,8 @@ object SparkRegressionTree {
 		println("        Calculating quantiles/candidate thresholds for each continuous feature.")
 		initialTime = System.currentTimeMillis
 		val candidateThresholdsForFeatures : Array[Array[Double]] = new Array(numFeatures)
-		val numQuantileSamples : Int = Math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
-		val numQuantileValues : Int = Math.min(maxNumQuantileValues, numQuantileSamples - 1)
+		val numQuantileSamples : Int = math.min(maxNumQuantileSamples.toLong, node.numSamples).toInt
+		val numQuantileValues : Int = math.min(maxNumQuantileValues, numQuantileSamples - 1)
 		val quantileSamples : Array[Array[Double]] = samples.takeSample(false, numQuantileSamples, 42)
 		ParSeq(Range(1, numFeatures) :_*).foreach(j => {
 		// for (j <- 1 to numFeatures - 1) {
@@ -234,8 +234,8 @@ object SparkRegressionTree {
 						statsForFeatureBinsMap(j)(b) = Array(0, 0, 0)
 					}
 				}
-				// val samplesList : List[Array[Double]] = samplesIterator.toList
-				// samplesList.foreach(sample => {
+				// val samplesArray : Array[Array[Double]] = samplesIterator.toArray
+				// samplesArray.foreach(sample => {
 				while (samplesIterator.hasNext) {
 					val sample : Array[Double] = samplesIterator.next
 					val square : Double = sample(0) * sample(0)
@@ -563,11 +563,11 @@ object SparkRegressionTree {
 		// Option 1: Recursive method may cause stack overflow.
 		// findBestSplitRecursive(rootNode)
 		// Option 2: Iterative by maintaining a queue.
-		var nodesStack : Stack[(Node,  RDD[Array[Double]])] = Stack()
+		val nodesStack : Stack[(Node,  RDD[Array[Double]])] = Stack()
 		nodesStack.push((rootNode, samples))
 		while (!nodesStack.isEmpty) {
 			val initialTime : Long = System.currentTimeMillis
-			var (node, nodeSamples) : (Node,  RDD[Array[Double]]) = nodesStack.pop
+			val (node, nodeSamples) = nodesStack.pop
 			if (nodeSamples.count >= minDistributedSamples) {
 				println("      Training Node # " + node.id + ".")
 				val (leftSamples, rightSamples) :
@@ -582,14 +582,14 @@ object SparkRegressionTree {
 				}
 			} else {
 				println("      Training Node # " + node.id + " (local).")
-				val (leftSamplesList, rightSamplesList) :
-					(List[Array[Double]], List[Array[Double]]) =
+				val (leftSamplesArray, rightSamplesArray) :
+					(Array[Array[Double]], Array[Array[Double]]) =
 						RegressionTree.trainNode(node, nodeSamples.collect,
 								featureTypes, numValuesForFeatures, featureWeights,
 								maxDepth, minGain, minLocalGainFraction, useSampleWeights)
 				if (!node.isLeaf) {
-					val leftSamples : RDD[Array[Double]] = samples.context.parallelize(leftSamplesList, 1)
-					val rightSamples : RDD[Array[Double]] = samples.context.parallelize(rightSamplesList, 1)
+					val leftSamples : RDD[Array[Double]] = samples.context.parallelize(leftSamplesArray, 1)
+					val rightSamples : RDD[Array[Double]] = samples.context.parallelize(rightSamplesArray, 1)
 					nodesStack.push((node.rightChild.get, rightSamples))
 					nodesStack.push((node.leftChild.get, leftSamples))
 				}
@@ -606,7 +606,7 @@ object SparkRegressionTree {
 	// 2.1. Function to save a tree model in text format for later use.
 	
 	def saveTree(sc : SparkContext, nodesFile : String, rootNode : Node) : Unit = {
-		val treeModelText : List[String] = RegressionTree.saveTree(rootNode)
+		val treeModelText : Array[String] = RegressionTree.saveTree(rootNode)
 		sc.parallelize(treeModelText, 1).saveAsTextFile(nodesFile)
 	}
 	

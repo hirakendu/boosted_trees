@@ -100,7 +100,7 @@ object SparkIndexing {
 		ParSeq(Range(1, featureTypes.length) :_*).foreach(j => {
 		// for (j <- 1 to featureTypes.length - 1) {
 			if (featureTypes(j) == 1) {
-				indexes(j) = Map(rawValuesForFeatures(j).toList.zipWithIndex :_*)
+				indexes(j) = Map(rawValuesForFeatures(j).toArray.zipWithIndex :_*)
 			}
 		// }
 		})

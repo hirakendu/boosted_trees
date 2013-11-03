@@ -63,7 +63,7 @@ object DataIndexer {
 			// 0 -> continuous, 1 -> discrete
 		
 		// 1.2 Read data.
-		// val rawSamples : List[String] = Source.fromFile(new File(dataFile)).getLines.toArray.toList
+		// val rawSamples : Array[String] = Source.fromFile(new File(dataFile)).getLines.toArray
 		
 		// 1.3. Index categorical features/fields and save indexes.
 		println("\n  Generating/reading indexes.\n")
