@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.spark.mllib.util
 
 import org.apache.spark.rdd.RDD
@@ -52,6 +69,45 @@ object DataEncoding {
       }
     }
     b1
+  }
+
+  /**
+   * Finds cardinalities of categorical features. Assumes a categorical
+   * feature of cardinality K takes values in {0,1,...,K-1},
+   * and thus finds the maximum index of each categorical feature
+   * in the data.
+   */
+  def findCardinalitiesForFeatures(featureTypes: Array[Int], data: RDD[LabeledPoint]): Array[Int] = {
+    val numFeatures: Int = featureTypes.length
+    val cardinalitiesForFeatures: Array[Int] =
+      data.mapPartitions(samplesIterator => {
+        val maxIdsForFeatures: Array[Int] = new Array(numFeatures)
+        // val samplesArray : Array[LabeledPoint] = samplesIterator.toArray
+        // samplesArray.foreach(sample => {
+        while (samplesIterator.hasNext) {
+          val features: Array[Double] = samplesIterator.next.features
+          for (j <- 0 to numFeatures - 1) {
+            if (featureTypes(j) == 1) {
+              maxIdsForFeatures(j) = math.max(maxIdsForFeatures(j), features(j).toInt)
+            }
+          }
+        }
+        // })  // End foreach.
+        Iterator(maxIdsForFeatures)
+      }).
+      reduce((maxIds1, maxIds2) => {
+        val maxIds: Array[Int] = new Array(numFeatures)
+        for (j <- 0 to numFeatures - 1) {
+          maxIds(j) = math.max(maxIds1(j), maxIds2(j))
+        }
+        maxIds
+      })
+    for (j <- 0 to numFeatures - 1) {
+      if (featureTypes(j) == 1) {
+        cardinalitiesForFeatures(j) += 1
+      }
+    }
+    cardinalitiesForFeatures
   }
 
 }

@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.spark.mllib.regression
 
 import scala.collection.mutable.Queue
@@ -17,7 +34,7 @@ import org.apache.spark.mllib.util.DataEncoding
  * Derived from [[org.apache.spark.mllib.regression.DecisionTreeAlgorithm]]
  * using [[org.apache.spark.mllib.loss.SquareLossStats]]
  * and [[org.apache.spark.mllib.loss.SquareLoss]].
- * 
+ *
  * @param featureTypes Indicates the types of the features, i.e., whether they
  *        are continuous, <code>0</code> or categorical, <code>1</code>.
  *        Default set to <code>Array(0, 0)</code> (two continuous features),
@@ -43,7 +60,8 @@ class RegressionTreeAlgorithm(
       useGlobalQuantiles: Int = 1,
       useCache: Int = 1,
       maxNumQuantiles: Int = 1000,
-      maxNumQuantileSamples: Int = 10000
+      maxNumQuantileSamples: Int = 10000,
+      histogramsMethod: String = "mapreduce"
     ) extends DecisionTreeAlgorithm[SquareLossStats](
       new SquareLoss,
       featureTypes,
@@ -52,7 +70,8 @@ class RegressionTreeAlgorithm(
       useGlobalQuantiles,
       useCache,
       maxNumQuantiles,
-      maxNumQuantileSamples
+      maxNumQuantileSamples,
+      histogramsMethod
     )
 
 /**
@@ -65,7 +84,8 @@ object RegressionTree {
 
     if (args.length < 6) {
       println("Usage: RegressionTree <master> <input_data_file> <input_header_file>" +
-          " <model_output_dir> <max_depth> <min_gain_fraction> [<use_global_quantiles>]")
+          " <model_output_dir> <max_depth> <min_gain_fraction> [<use_global_quantiles>=0|1*]" +
+          "[<histograms_method>=mapreduce*|parts]")
       System.exit(1)
     }
 
@@ -86,12 +106,19 @@ object RegressionTree {
         // 0 -> continuous, 1 -> discrete
 
     var useGlobalQuantiles = 1
-    if (args.length == 7) {
+    if (args.length >= 7) {
       useGlobalQuantiles = args(6).toInt
     }
+
+    var histogramsMethod = "mapreduce"
+    if (args.length >= 8) {
+      histogramsMethod = args(7)
+    }
+
     val algorithm = new RegressionTreeAlgorithm(featureTypes,
       maxDepth = args(4).toInt, minGainFraction = args(5).toDouble,
-      useGlobalQuantiles = useGlobalQuantiles)
+      useGlobalQuantiles = useGlobalQuantiles,
+      histogramsMethod = histogramsMethod)
 
     val model = algorithm.train(data)
 
@@ -145,4 +172,3 @@ object RegressionTreeTest {
     sc.stop()
   }
 }
-

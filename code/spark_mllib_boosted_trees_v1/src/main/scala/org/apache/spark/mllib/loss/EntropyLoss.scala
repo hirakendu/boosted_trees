@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.spark.mllib.loss
 
 /**
@@ -6,12 +23,12 @@ package org.apache.spark.mllib.loss
  * Consists of the count of values and the sum of values.
  * The labels are assumed to be <code>0</code> or <code>1</code>,
  * so that the sum is the number of <code>1</code>'s.
- * 
+ *
  * See [[org.apache.spark.mllib.loss.LossStats]] for background
  * and [[org.apache.spark.mllib.loss.EntropyLoss]] that implements
  * methods for finding loss functions of a set of values
  * from these loss statistics.
- * 
+ *
  * @see [[org.apache.spark.mllib.loss.LossStats]]
  *      [[org.apache.spark.mllib.loss.EntropyLoss]]
  */
@@ -24,8 +41,8 @@ class EntropyLossStats extends LossStats[EntropyLossStats] {
    * Adds a sample <code>y</code> to this loss statistics
    * by adding 1 to <code>count</code>
    * and adding <code>y</code> to <code>sum</code>.
-   * 
-   * @param y <code>y</code>-value to summarize and assimilate. 
+   *
+   * @param y <code>y</code>-value to summarize and assimilate.
    */
   def addSample(y: Double): EntropyLossStats = {
     count += 1
@@ -37,7 +54,7 @@ class EntropyLossStats extends LossStats[EntropyLossStats] {
    * Returns the sum of a given loss statistics with this loss statistics.
    * Simply adds the respective <code>count</code> and <code>sum</code>
    * fields of the loss statistics.
-   * 
+   *
    * @param stats2 Other loss statistics to add.
    */
   def +(stats2: EntropyLossStats): EntropyLossStats = {
@@ -51,7 +68,7 @@ class EntropyLossStats extends LossStats[EntropyLossStats] {
    * Adds a given loss statistics to this loss statistics.
    * Adds the <code>count</code> and <code>sum</code>
    * fields of the given loss statistics to itself.
-   * 
+   *
    * @param stats2 Other loss statistics to merge.
    */
   def accumulate(stats2: EntropyLossStats): EntropyLossStats = {
@@ -69,7 +86,7 @@ class EntropyLossStats extends LossStats[EntropyLossStats] {
  * See [[org.apache.spark.mllib.loss.LossStats]]
  * and [[org.apache.spark.mllib.loss.Loss]]
  * for background.
- * 
+ *
  * @see [[org.apache.spark.mllib.loss.EntropyLossStats]]
  *      [[org.apache.spark.mllib.loss.LossStats]]
  *      [[org.apache.spark.mllib.loss.Loss]]
@@ -82,7 +99,7 @@ class EntropyLoss(val pMin: Double = 1e-10) extends Loss[EntropyLossStats] {
    * as the likelihood of <code>1</code>.
    * Thus, if <code>y1 = 0</code>, then <code>p = 1-y2</code>,
    * and if <code>y1 = 1</code>, then <code>p = y2</code>.
-   * 
+   *
    * @param y1 True binary value, <code>0</code> or <code>1</code>.
    * @param y2 Predicted value, the likelihood of <code>1</code>.
    */
@@ -102,7 +119,7 @@ class EntropyLoss(val pMin: Double = 1e-10) extends Loss[EntropyLossStats] {
 
   /**
    * Returns <code>count</code> of <code>lossStats</code>.
-   * 
+   *
    * @param lossStats Loss statistics of a set of samples.
    */
   def count(lossStats: EntropyLossStats): Long = lossStats.count
@@ -111,7 +128,7 @@ class EntropyLoss(val pMin: Double = 1e-10) extends Loss[EntropyLossStats] {
    * Returns <code>p = sum/count</code> of <code>lossStats</code>,
    * where <code>p</code> is thus the fraction of <code>1</code>s
    * in the samples.
-   * 
+   *
    * @param lossStats Loss statistics of a set of samples.
    */
   def centroid(lossStats: EntropyLossStats): Double = lossStats.sum / lossStats.count
@@ -120,7 +137,7 @@ class EntropyLoss(val pMin: Double = 1e-10) extends Loss[EntropyLossStats] {
    * Returns <code>count * (p*log2(1/p) + (1-p)*log2(1/(1-p))</code>
    * where <code>p = centroid = sum/count</code>
    * of <code>lossStats</code>.
-   * 
+   *
    * @param lossStats Loss statistics of a set of samples.
    */
   def error(lossStats: EntropyLossStats): Double = {
