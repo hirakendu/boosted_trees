@@ -23,9 +23,9 @@ import org.apache.spark.mllib.regression.LabeledPoint
 object DataEncoding {
 
   /**
-   * Finds quantiles for continuous features.
+   * Generates quantiles for continuous features.
    */
-  def findQuantilesForFeatures(data : RDD[LabeledPoint],
+  def generateQuantiles(data : RDD[LabeledPoint],
       featureTypes : Array[Int],
       maxNumQuantiles: Int = 1000,
       maxNumQuantileSamples : Int = 100000): Array[Array[Double]] = {

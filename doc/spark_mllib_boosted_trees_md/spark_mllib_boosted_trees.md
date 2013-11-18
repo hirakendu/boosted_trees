@@ -56,7 +56,8 @@ and second one categorical, a header file may contain
 
 .
 
-If no header file is provided, all features are considered to be continuous.
+If all features are continuous, a header file need not be present
+and instead `0` can be specified as an argument.
 
 ### Synthetic data generation
 
@@ -92,7 +93,7 @@ Basic usage is similar to other generators,
 
 The basic usage of the training program `RegressionTree` is
 
-    RegressionTree <master> <input_data_file> <input_header_file> <model_output_dir> <max_depth> <min_gain_fraction> [<use_global_quantiles>]
+    RegressionTree <master> <input_data_file> <input_header_file> <model_output_dir> <max_depth> <min_gain_fraction>
 
 . E.g.,
 
@@ -241,11 +242,11 @@ Takes 15 minutes to train a classification tree model
 and 30 minutes to train a regression tree model,
 both limited to depth 5 and minimum gain fraction of 0.01.
 Most time is spent on the distributed process of finding
-loss statistics histograms of data subsets
+loss statistics histograms of data subsets,
 indicating a reasonably efficient implementation
 in terms of cluster idle time.
-The logs can be parsed for info messages from RegressionTree
-and ClassificationTree to observe times taken for various steps.
+The logs can be parsed for info messages from `RegressionTree`
+and `ClassificationTree` to observe times taken for various steps.
 
 ## Todo
 

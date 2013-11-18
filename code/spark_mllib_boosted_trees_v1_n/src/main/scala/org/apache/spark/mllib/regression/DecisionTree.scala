@@ -91,7 +91,7 @@ class Node(
   var count: Long = 0,
   var response: Double = 0,
   var error: Double = 0,
-  var splitError: Double = 0,
+  var splitError : Double = 0,
   var gain: Double = 0,
   //
   var featureId: Int = -1,
@@ -110,7 +110,7 @@ class Node(
    * Indicates if the node is leaf or not based on whether
    * the child nodes are empty.
    */
-  def isLeaf(): Boolean = {
+  def isLeaf() : Boolean = {
     if (leftChild == null && rightChild == null) {
       return true
     }
@@ -122,7 +122,7 @@ class Node(
    * split predicate, response, and training sample count.
    */
   def explain(): String = {
-    var line: String = ""
+    var line : String = ""
     for (d <- 1 to depth) {
       line += "  "
     }
@@ -148,7 +148,7 @@ class Node(
    * @see [[org.apache.spark.mllib.regression.DecisionTreeModel]]<code>.save</code>
    */
   def save(): Array[String] = {
-    val lines: MutableList[String] = MutableList()
+    val lines : MutableList[String] = MutableList()
     val indent: String = "    "
     lines += indent + "{"
     lines += indent + "  \"id\": " + id + ","
@@ -245,11 +245,11 @@ class DecisionTreeModel(var rootNode: Node)
    * its nodes.
    */
   def explain(): Array[String] = {
-    val lines: MutableList[String] = MutableList()
-    val nodesStack: Stack[Node] = Stack()
+    val lines : MutableList[String] = MutableList()
+    val nodesStack : Stack[Node] = Stack()
     nodesStack.push(rootNode)
     while (!nodesStack.isEmpty) {
-      val node: Node = nodesStack.pop
+      var node : Node = nodesStack.pop
       lines += node.explain
       if (!node.isLeaf) {
         nodesStack.push(node.rightChild)
@@ -264,7 +264,7 @@ class DecisionTreeModel(var rootNode: Node)
    * for saving a node as part of the model for later use.
    */
   def save(): Array[String] = {
-    val lines: MutableList[String] = MutableList()
+    val lines : MutableList[String] = MutableList()
     lines += "{"
     lines += "  \"nodes\": " + "["
     val nodesStack: Stack[Node] = Stack()
@@ -371,6 +371,10 @@ class DecisionTreeModel(var rootNode: Node)
  * @param minGainFraction Minimum gain of any internal node relative
  *        to the variance/impurity of the root node. Used as a condition for
  *        terminating the tree growing procedure.
+ * @param useGlobalQuantiles Use the same quantiles for continuous features
+ *        across various splits. Speeds up the training by avoiding quantile
+ *        calculations for specific data subsets corresponding to nodes.
+ *        Results in minor differences in model and prediction performance.
  * @param useCache Cache the training dataset in memory.
  * @param maxNumQuantiles Maximum number of quantiles to use for any continous feature.
  * @param maxNumQuantileSamples Maximum number of samples used for quantile
@@ -381,6 +385,7 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
       val featureTypes: Array[Int] = Array(0, 0),
       val maxDepth: Int = 5,
       val minGainFraction: Double = 0.01,
+      val useGlobalQuantiles: Int = 1,
       val useCache: Int = 1,
       val maxNumQuantiles: Int = 1000,
       val maxNumQuantileSamples: Int = 10000,
@@ -390,59 +395,27 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
   // Parameters that depend on both algorithm parameters and data.
 
   private var minGain: Double = 1e-6
-  private var quantilesForFeatures: Array[Array[Double]] = null
+  private var globalQuantilesForFeatures: Array[Array[Double]] = null
   private var cardinalitiesForFeatures: Array[Int] = null
 
   // Methods for finding histograms.
 
   /**
-   * Calculates loss stats histograms for features for all nodes at a level.
-   * Default implementation uses map-reduce (flatMap and reduceByKey).
+   * Calculates loss stats histograms. Default implementation uses
+   * map-reduce (flatMap and reduceByKey).
    */
   def calculateHistograms(data: RDD[LabeledPoint],
-      rootNode: Node, level: Int,
-      nodeIdsToSplit: Set[Int]): Array[Array[Array[(Int, S)]]] = {
-
-    val numNodes: Int = math.pow(2, level).toInt
-
-    val statsForBinsForFeaturesForNodes: Array[Array[Array[(Int, S)]]] = new Array(numNodes)
+      quantilesForFeatures: Array[Array[Double]]): Array[Array[(Int, S)]] = {
 
     val numFeatures: Int = featureTypes.length
+    val statsForBinsForFeatures: Array[Array[(Int, S)]] = new Array(numFeatures)
 
-    for (nodeId <- nodeIdsToSplit) {
-      statsForBinsForFeaturesForNodes(nodeId - numNodes) = new Array(numFeatures)
-    }
-
-    val statsForNodesFeaturesBins: Array[((Int, Int, Int), S)] =
-      data.map(sample => {
-        // Find leaf node to which the sample belongs.
-        var node: Node = rootNode
-        while (!node.isLeaf) {
-          if (node.featureType == 0) {
-            // Continuous feature.
-            if (sample.features(node.featureId) < node.threshold) {
-              node = node.leftChild
-            } else {
-              node = node.rightChild
-            }
-          } else {
-            // Discrete feature.
-            if (node.leftBranchValues.contains(sample.features(node.featureId).toInt)) {
-              node = node.leftChild
-            } else {
-              node = node.rightChild
-            }
-          }
-        }
-        (sample, node.id)
-      }).
-      filter(sampleAndNodeId => nodeIdsToSplit.contains(sampleAndNodeId._2)).
-      flatMap(sampleAndNodeId => {
-        val sample: LabeledPoint = sampleAndNodeId._1
+    val statsForFeatureBins: Array[((Int, Int), S)] =
+      data.flatMap(sample => {
         val lossStats: S = loss.zeroStats.addSample(sample.label)
-        val statsForBins: Array[((Int, Int, Int), S)] = new Array(numFeatures)
+        val statsForBins : Array[((Int, Int), S)] = new Array(numFeatures)
         for (j <- 0 to numFeatures - 1) {
-          var bj: Int = 0  // Bin index of the value.
+          var bj : Int = 0  // Bin index of the value.
           if (featureTypes(j) == 0) {
             // Continuous feature.
             bj = DataEncoding.findQuantileBin(quantilesForFeatures(j), sample.features(j))
@@ -450,97 +423,61 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
             // Discrete feature.
             bj = sample.features(j).toInt
           }
-          statsForBins(j) = ((sampleAndNodeId._2, j, bj), lossStats)
+          statsForBins(j) = ((j, bj), lossStats)
         }
         statsForBins
       }).
       reduceByKey(_ + _).
       collect
 
-    // Separate the histograms for different nodes and features.
+    // Separate the histograms for different features.
     // Sort bins of discrete features by centroids of output values.
     // Sort bins of continuous features by input values (quantiles).
-    for (nodeId <- nodeIdsToSplit) {
-      for (j <- 0 to numFeatures - 1) {
-        val statsForBins: Array[(Int, S)] =
-          statsForNodesFeaturesBins.filter(x => x._1._1 == nodeId && x._1._2 == j).
-            map(statsForFeatureBin => (statsForFeatureBin._1._3, statsForFeatureBin._2))
-        if (featureTypes(j) == 0) {
-          statsForBinsForFeaturesForNodes(nodeId - numNodes)(j) = statsForBins.sortWith(_._1 < _._1)
-        } else if (featureTypes(j) == 1) {
-          statsForBinsForFeaturesForNodes(nodeId - numNodes)(j) = statsForBins.
-            sortWith((stats1, stats2) => loss.centroid(stats1._2) < loss.centroid(stats2._2))
-        }
+    for (j <- 0 to numFeatures - 1) {
+      val statsForBins : Array[(Int, S)] =
+        statsForFeatureBins.filter(_._1._1 == j).
+          map(statsForFeatureBin => (statsForFeatureBin._1._2, statsForFeatureBin._2))
+      if (featureTypes(j) == 0) {
+        statsForBinsForFeatures(j) = statsForBins.sortWith(_._1 < _._1)
+      } else if (featureTypes(j) == 1) {
+        statsForBinsForFeatures(j) = statsForBins.
+          sortWith((stats1, stats2) => loss.centroid(stats1._2) < loss.centroid(stats2._2))
       }
     }
 
-    statsForBinsForFeaturesForNodes
+    statsForBinsForFeatures
   }
 
   /**
-   * Calculates loss stats histograms for features for all nodes at a level.
-   * Default implementation uses map-reduce (flatMap and reduceByKey).
+   * Calculates loss stats histograms. This alternate implementation
+   * computes histograms of data partitions and merges them at master.
+   * Uses arrays for storing histograms.
    */
   def calculateHistogramsByParts(data: RDD[LabeledPoint],
-      rootNode: Node, level: Int,
-      nodeIdsToSplit: Set[Int]): Array[Array[Array[(Int, S)]]] = {
-
-    val numNodes: Int = math.pow(2, level).toInt
-
-    val statsForBinsForFeaturesForNodes: Array[Array[Array[(Int, S)]]] = new Array(numNodes)
+      quantilesForFeatures: Array[Array[Double]],
+      cardinalitiesForFeatures: Array[Int]): Array[Array[(Int, S)]] = {
 
     val numFeatures: Int = featureTypes.length
 
-    for (nodeId <- nodeIdsToSplit) {
-      statsForBinsForFeaturesForNodes(nodeId - numNodes) = new Array(numFeatures)
-    }
+    val statsForBinsForFeatures: Array[Array[(Int, S)]] = new Array(numFeatures)
 
-    val statsForNodesFeaturesBins: Array[Array[Array[S]]] =
-      data.map(sample => {
-        // Find leaf node to which the sample belongs.
-        var node: Node = rootNode
-        while (!node.isLeaf) {
-          if (node.featureType == 0) {
-            // Continuous feature.
-            if (sample.features(node.featureId) < node.threshold) {
-              node = node.leftChild
-            } else {
-              node = node.rightChild
-            }
+    val statsForFeatureBins: Array[Array[S]] =
+      data.mapPartitions(samplesIterator => {
+        val statsForFeatureBinsMap: Array[Array[S]] = new Array(numFeatures)
+        for (j <- 0 to numFeatures - 1) {
+          if (featureTypes(j) == 0) {
+            statsForFeatureBinsMap(j) = new Array(quantilesForFeatures(j).length + 1)
           } else {
-            // Discrete feature.
-            if (node.leftBranchValues.contains(sample.features(node.featureId).toInt)) {
-              node = node.leftChild
-            } else {
-              node = node.rightChild
-            }
+            statsForFeatureBinsMap(j) = new Array(cardinalitiesForFeatures(j))
+          }
+          for (b <- 0 to statsForFeatureBinsMap(j).length - 1) {
+            statsForFeatureBinsMap(j)(b) = loss.zeroStats
           }
         }
-        (sample, node.id)
-      }).
-      filter(sampleAndNodeId => nodeIdsToSplit.contains(sampleAndNodeId._2)).
-      mapPartitions(samplesWithNodeIdsIterator => {
-        val statsForNodesFeaturesBinsMap: Array[Array[Array[S]]] = new Array(numNodes)
-        for (nodeId <- nodeIdsToSplit) {
-          val l: Int = nodeId - numNodes
-          statsForNodesFeaturesBinsMap(l) = new Array(numFeatures)
-          for (j <- 0 to numFeatures - 1) {
-            if (featureTypes(j) == 0) {
-              statsForNodesFeaturesBinsMap(l)(j) = new Array(quantilesForFeatures(j).length + 1)
-            } else {
-              statsForNodesFeaturesBinsMap(l)(j) = new Array(cardinalitiesForFeatures(j))
-            }
-            for (b <- 0 to statsForNodesFeaturesBinsMap(l)(j).length - 1) {
-              statsForNodesFeaturesBinsMap(l)(j)(b) = loss.zeroStats
-            }
-          }
-        }
-        // val samplesWithNodeIdsArray: Array[LabeledPoint] = samplesWithNodeIdsIterator.toArray
-        // samplesWithNodeIdsArray.foreach(sampleWithNodeId => {
-        while (samplesWithNodeIdsIterator.hasNext) {
-          val sampleWithNodeId: (LabeledPoint, Int) = samplesWithNodeIdsIterator.next
-          val sample: LabeledPoint = sampleWithNodeId._1
-          val l: Int = sampleWithNodeId._2 - numNodes
+        // val samplesArray: Array[LabeledPoint] = samplesIterator.toArray
+        // samplesArray.foreach(sample => {
+        while (samplesIterator.hasNext) {
+          val sample: LabeledPoint = samplesIterator.next
           val lossStats: S = loss.zeroStats.addSample(sample.label)
           val features: Array[Double] = sample.features
           for (j <- 0 to numFeatures - 1) {
@@ -552,20 +489,17 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
               // Discrete feature.
               bj = features(j).toInt
             }
-            statsForNodesFeaturesBinsMap(l)(j)(bj).accumulate(lossStats)
+            statsForFeatureBinsMap(j)(bj).accumulate(lossStats)
           }
         }  // End while.
         // })  // End foreach.
-        Iterator(statsForNodesFeaturesBinsMap)
+        Iterator(statsForFeatureBinsMap)
       }).
       reduce((map1, map2) => {
-        val merged : Array[Array[Array[S]]] = map1.clone
-        for (nodeId <- nodeIdsToSplit) {
-          val l: Int = nodeId - numNodes
-          for (j <- 0 to numFeatures - 1) {
-            for (b <- 0 to merged(l)(j).length - 1) {
-              merged(l)(j)(b) = map1(l)(j)(b) + map2(l)(j)(b)
-            }
+        val merged : Array[Array[S]] = map1.clone
+        for (j <- 0 to numFeatures - 1) {
+          for (b <- 0 to merged(j).length - 1) {
+            merged(j)(b) = map1(j)(b) + map2(j)(b)
           }
         }
         merged
@@ -574,86 +508,24 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
     // Separate the histograms for different features.
     // Sort bins of discrete features by centroids of output values.
     // Sort bins of continuous features by input values (quantiles).
-    for (nodeId <- nodeIdsToSplit) {
-      for (j <- 0 to numFeatures - 1) {
-        val statsForBins: Array[(Int, S)] =
-          statsForNodesFeaturesBins(nodeId - numNodes)(j).zipWithIndex.
-            map(x => (x._2, x._1)).
-            filter(x => loss.count(x._2) > 0)  // Filter is required to divide by counts.
-        if (featureTypes(j) == 0) {
-          // For continuous features, order by bin indices,
-          // i.e., order of quantiles.
-          statsForBinsForFeaturesForNodes(nodeId - numNodes)(j) = statsForBins.sortWith(_._1 < _._1)
-        } else if (featureTypes(j) == 1) {
-          // For categorical features, order by means of bins,
-          // i.e., order of means of values.
-          statsForBinsForFeaturesForNodes(nodeId - numNodes)(j) = statsForBins.
-              sortWith((stats1, stats2) => loss.centroid(stats1._2) < loss.centroid(stats2._2))
-        }
+    for (j <- 0 to numFeatures - 1) {
+      val statsForBins: Array[(Int, S)] =
+        statsForFeatureBins(j).zipWithIndex.
+          map(x => (x._2, x._1)).
+          filter(x => loss.count(x._2) > 0)  // Filter is required to divide by counts.
+      if (featureTypes(j) == 0) {
+        // For continuous features, order by bin indices,
+        // i.e., order of quantiles.
+        statsForBinsForFeatures(j) = statsForBins.sortWith(_._1 < _._1)
+      } else if (featureTypes(j) == 1) {
+        // For categorical features, order by means of bins,
+        // i.e., order of means of values.
+        statsForBinsForFeatures(j) = statsForBins.
+            sortWith((stats1, stats2) => loss.centroid(stats1._2) < loss.centroid(stats2._2))
       }
     }
 
-    statsForBinsForFeaturesForNodes
-  }
-
-  /**
-   * Finds the best split for all nodes of a level for a tree.
-   *
-   * @param level The level of tree for which nodes are to be trained.
-   * @param rootNode The root node of the tree model trained so far.
-   * @param data The training dataset.
-   */
-  def trainLevel(level: Int, rootNode: Node, data: RDD[LabeledPoint]): Unit = {
-
-    // 1. Find the set of node ids at this level to split, i.e.,
-    //    current leaf nodes at this level.
-
-    val nodesToSplit: MutableList[Node] = MutableList()
-    val nodesStack: Stack[Node] = Stack()
-    nodesStack.push(rootNode)
-    while (!nodesStack.isEmpty) {
-      val node: Node = nodesStack.pop
-      if (node.isLeaf) {
-        if (node.depth == level) {
-          nodesToSplit += node
-        }
-      } else {
-        nodesStack.push(node.rightChild)
-        nodesStack.push(node.leftChild)
-      }
-    }
-
-    // 2. Find histograms for features for nodes to split.
-
-    logInfo("      Finding loss statistics histograms for Level # " + level + ".")
-    var initialTime: Long = System.currentTimeMillis
-
-    var statsForBinsForFeaturesForNodes: Array[Array[Array[(Int, S)]]] = null
-    if ("parts".equals(histogramsMethod)) {
-      statsForBinsForFeaturesForNodes =
-          calculateHistogramsByParts(data, rootNode, level, nodesToSplit.map(_.id).toSet)
-    } else {
-      statsForBinsForFeaturesForNodes =
-          calculateHistograms(data, rootNode, level, nodesToSplit.map(_.id).toSet)
-    }
-
-    var finalTime: Long = System.currentTimeMillis
-    logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
-
-    // 3. Find best splits for nodes in this level using the histograms.
-
-    val numNodes: Int = math.pow(2, level).toInt
-    for (node <- nodesToSplit) {
-      logInfo("      Training Node # " + node.id + ".")
-      initialTime = System.currentTimeMillis
-
-      trainNode(node, statsForBinsForFeaturesForNodes(node.id - numNodes))
-
-      finalTime = System.currentTimeMillis
-      logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
-    }
-
-    return
+    statsForBinsForFeatures
   }
 
   /**
@@ -665,27 +537,28 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
    *
    * @param node Node to split. It is modified during the training process
    *        to store the split predicate and initialize the child nodes.
-   * @param statsForBinsForFeatures loss statistics histograms for features
-   *        for the corresponding data subset.
+   * @param data Corresponding data subset.
    *
    * @return Data subsets obtained by splitting the parent/input data subset
    *        using the input node's split predicate, in turn derived
    *        as part of this training process.
    */
-  def trainNode(node: Node, statsForBinsForFeatures: Array[Array[(Int, S)]]): Unit = {
+  def trainNode(node: Node, data: RDD[LabeledPoint]):
+    (RDD[LabeledPoint], RDD[LabeledPoint]) = {
 
     // 1. Calculate initial node statistics.
 
     logInfo("        Calculating initial node statistics.")
-    var initialTime: Long = System.currentTimeMillis
+    var initialTime : Long = System.currentTimeMillis
 
-    val lossStats: S = statsForBinsForFeatures(0).map(_._2).
+    val lossStats: S = data.
+        map(sample => loss.zeroStats.addSample(sample.label)).
         reduce((stats1, stats2) => stats1 + stats2)
     node.count = loss.count(lossStats)
     node.response = loss.centroid(lossStats)
     node.error = loss.error(lossStats)
 
-    var finalTime: Long = System.currentTimeMillis
+    var finalTime : Long = System.currentTimeMillis
     logInfo("        Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
 
     // 2. Don't split if not enough samples or depth too high
@@ -694,22 +567,55 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
     //    Additional criteria are used to stop the split further along.
 
     if (node.count < 2) {
-      return
+      return (null, null)
     }
     if (node.id >= math.pow(2, maxDepth)) {
-      return
+      return (null, null)
     }
 
-    // 3. Find best split with least error for each feature.
+    // 3. Find the quantiles (candidate thresholds) for continuous features.
+
+    var quantilesForFeatures: Array[Array[Double]] = globalQuantilesForFeatures
+    if (globalQuantilesForFeatures == null) {
+
+      logInfo("        Calculating quantiles for continuous features.")
+      initialTime = System.currentTimeMillis
+
+      quantilesForFeatures = DataEncoding.generateQuantiles(data, featureTypes,
+          maxNumQuantiles, maxNumQuantileSamples)
+
+      finalTime = System.currentTimeMillis
+      logInfo("        Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
+    }
+
+    // 4. Find the loss stats histograms for all feature-value bins.
+
+    logInfo("        Calculating loss stats histograms for each feature.")
+    initialTime = System.currentTimeMillis
+
+    var statsForBinsForFeatures: Array[Array[(Int, S)]] = null
+    if ("parts".equals(histogramsMethod)) {
+      statsForBinsForFeatures = calculateHistogramsByParts(data,
+          quantilesForFeatures, cardinalitiesForFeatures)
+    } else {
+      // Default histograms method is "mapreduce".
+      statsForBinsForFeatures = calculateHistograms(data, quantilesForFeatures)
+    }
+
+    // Done calculating histograms.
+    finalTime = System.currentTimeMillis
+    logInfo("        Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
+
+    // 5. Find best split with least error for each feature.
 
     logInfo("        Finding best split and error.")
     initialTime = System.currentTimeMillis
 
     val numFeatures: Int = featureTypes.length
-    val errorsForFeatures: Array[Double] = new Array(numFeatures)
-    val thresholdsForFeatures: Array[Double] = new Array(numFeatures)
-    val leftBranchValuesForFeatures: Array[Set[Int]]  = new Array(numFeatures)
-    val rightBranchValuesForFeatures: Array[Set[Int]]  = new Array(numFeatures)
+    val errorsForFeatures : Array[Double] = new Array(numFeatures)
+    val thresholdsForFeatures : Array[Double] = new Array(numFeatures)
+    val leftBranchValuesForFeatures : Array[Set[Int]]  = new Array(numFeatures)
+    val rightBranchValuesForFeatures : Array[Set[Int]]  = new Array(numFeatures)
 
     for (j <- 0 to numFeatures - 1) {
       val (sMin, minSplitError) = loss.splitError(statsForBinsForFeatures(j).map(_._2))
@@ -727,12 +633,12 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
       }
     }
 
-    // 4. Find the feature with best split, i.e., maximum gain.
+    // 6. Find the feature with best split, i.e., maximum gain.
 
-    var jMax: Int = 0
+    var jMax : Int = 0
     var maxGain: Double  = node.error - errorsForFeatures(0)
     for (j <- 1 to numFeatures - 1) {
-      val gain: Double = node.error - errorsForFeatures(j)
+      val gain : Double = node.error - errorsForFeatures(j)
       if (gain > maxGain) {
         maxGain = gain
         jMax = j
@@ -753,10 +659,10 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
     finalTime = System.currentTimeMillis
     logInfo("        Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
 
-    // 5. Don't split if not enough gain.
+    // 7. Don't split if not enough gain.
 
     if (node.gain <= minGain + 1e-7) {
-      return
+      return (null, null)
     }
 
     // 8. Split data for left and right branches.
@@ -768,8 +674,19 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
     node.rightChild.id = node.id * 2 + 1
     node.leftChild.depth = node.depth + 1
     node.rightChild.depth = node.depth + 1
+    var leftBranchData : RDD[LabeledPoint] = null
+    var rightBranchData : RDD[LabeledPoint] = null
+    if (featureTypes(jMax) == 0) {
+      leftBranchData = data.filter(sample => sample.features(jMax) < node.threshold)
+      rightBranchData = data.filter(sample => sample.features(jMax) >= node.threshold)
+    } else if (featureTypes(jMax) == 1) {
+      leftBranchData = data.
+          filter(sample => node.leftBranchValues.contains(sample.features(jMax).toInt))
+      rightBranchData = data.
+          filter(sample => node.rightBranchValues.contains(sample.features(jMax).toInt))
+    }
 
-    return
+    (leftBranchData, rightBranchData)
   }
 
   /**
@@ -804,22 +721,23 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
     var finalTime: Long = System.currentTimeMillis
     logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
 
-    // 3. Find quantiles for continuous features.
+    // 3. Find global quantiles for continuous features.
 
-    logInfo("      Finding quantiles for continuous features.")
-    initialTime = System.currentTimeMillis
+    if (useGlobalQuantiles == 1) {
+      logInfo("      Calculating global quantiles for continuous features.")
+      initialTime = System.currentTimeMillis
 
-    quantilesForFeatures = DataEncoding.findQuantilesForFeatures(data, featureTypes,
-        maxNumQuantiles, maxNumQuantileSamples)
+      globalQuantilesForFeatures = DataEncoding.generateQuantiles(data, featureTypes,
+          maxNumQuantiles, maxNumQuantileSamples)
 
-    finalTime = System.currentTimeMillis
-    logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
-
+      finalTime = System.currentTimeMillis
+      logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
+    }
 
     // 4. Find cardinalities of categorical features.
 
     if ("parts".equals(histogramsMethod)) {
-      logInfo("      Finding cardinalities for categorical features.")
+      logInfo("      Calculating cardinalities for categorical features.")
       initialTime = System.currentTimeMillis
 
       cardinalitiesForFeatures = DataEncoding.findCardinalitiesForFeatures(featureTypes, data)
@@ -828,15 +746,27 @@ class DecisionTreeAlgorithm[S <: LossStats[S]:Manifest](
       logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
     }
 
-    // 5. Grow the tree level by level.
+    // 5. Grow the tree by recursively splitting nodes.
 
     val rootNode: Node = new Node
     rootNode.id = 1
     rootNode.depth = 0
-    for (level <- 0 to maxDepth) {
-      trainLevel(level, rootNode, data)
+    val nodesQueue : Queue[(Node, RDD[LabeledPoint])] = Queue()
+    nodesQueue += ((rootNode, data))
+    while (!nodesQueue.isEmpty) {
+      val (node, nodeData) = nodesQueue.dequeue
+      val initialTime : Long = System.currentTimeMillis
+      logInfo("      Training Node # " + node.id + ".")
+      val (leftBranchData, rightBranchData):
+        (RDD[LabeledPoint], RDD[LabeledPoint]) =
+        trainNode(node, nodeData)
+      if (!node.isLeaf) {
+        nodesQueue += ((node.leftChild, leftBranchData))
+        nodesQueue += ((node.rightChild, rightBranchData))
+      }
+      val finalTime : Long = System.currentTimeMillis
+      logInfo("      Time taken = " + "%.3f".format((finalTime - initialTime) / 1000.0) + " s.")
     }
-
     new DecisionTreeModel(rootNode)
   }
 

@@ -44,6 +44,10 @@ import org.apache.spark.mllib.util.DataEncoding
  * @param minGainFraction Minimum gain of any internal node relative
  *        to the variance/impurity of the root node. Used as a condition for
  *        terminating the tree growing procedure.
+ * @param useGlobalQuantiles Use the same quantiles for continuous features
+ *        across various splits. Speeds up the training by avoiding quantile
+ *        calculations for specific data subsets corresponding to nodes.
+ *        Results in minor differences in model and prediction performance.
  * @param useCache Cache the training dataset in memory.
  * @param maxNumQuantiles Maximum number of quantiles to use for any continous feature.
  * @param maxNumQuantileSamples Maximum number of samples used for quantile
@@ -53,6 +57,7 @@ class RegressionTreeAlgorithm(
       featureTypes: Array[Int] = new Array(2),
       maxDepth: Int = 5,
       minGainFraction: Double = 0.01,
+      useGlobalQuantiles: Int = 1,
       useCache: Int = 1,
       maxNumQuantiles: Int = 1000,
       maxNumQuantileSamples: Int = 10000,
@@ -62,6 +67,7 @@ class RegressionTreeAlgorithm(
       featureTypes,
       maxDepth,
       minGainFraction,
+      useGlobalQuantiles,
       useCache,
       maxNumQuantiles,
       maxNumQuantileSamples,
@@ -77,8 +83,8 @@ object RegressionTree {
   def main(args: Array[String]) {
 
     if (args.length < 6) {
-      println("Usage: RegressionTree <master> <input_data_file> <input_header_file> " +
-          " <model_output_dir> <max_depth> <min_gain_fraction> " +
+      println("Usage: RegressionTree <master> <input_data_file> <input_header_file>" +
+          " <model_output_dir> <max_depth> <min_gain_fraction> [<use_global_quantiles>=0|1*]" +
           "[<histograms_method>=mapreduce*|parts]")
       System.exit(1)
     }
@@ -99,13 +105,19 @@ object RegressionTree {
     val featureTypes : Array[Int] = features.map(feature => {if (feature.endsWith("$")) 1 else 0})
         // 0 -> continuous, 1 -> discrete
 
-    var histogramsMethod = "mapreduce"
+    var useGlobalQuantiles = 1
     if (args.length >= 7) {
-      histogramsMethod = args(6)
+      useGlobalQuantiles = args(6).toInt
+    }
+
+    var histogramsMethod = "mapreduce"
+    if (args.length >= 8) {
+      histogramsMethod = args(7)
     }
 
     val algorithm = new RegressionTreeAlgorithm(featureTypes,
       maxDepth = args(4).toInt, minGainFraction = args(5).toDouble,
+      useGlobalQuantiles = useGlobalQuantiles,
       histogramsMethod = histogramsMethod)
 
     val model = algorithm.train(data)
