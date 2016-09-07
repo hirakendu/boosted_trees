@@ -1,0 +1,14 @@
+weight,year,cylinders,make$	100.00
+weight,cylinders	98.68
+weight,year,cylinders	98.51
+horsepower,year,cylinders	92.47
+horsepower,cylinders	90.52
+cylinders	81.56
+weight,year,make$	18.44
+weight	17.13
+weight,year	16.96
+horsepower,year	10.91
+horsepower	8.96
+year	4.17
+year,make$	3.70
+make$	1.49

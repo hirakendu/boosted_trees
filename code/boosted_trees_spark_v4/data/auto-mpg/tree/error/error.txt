@@ -1,0 +1,5 @@
+RMSE = 8.01600
+MAE = 6.61256
+Trivial response = 20.77800
+Trivial RMSE = 12.49726
+Trivial MAE = 11.11259

@@ -1,0 +1,10 @@
+mpg
+cylinders
+displacement
+horsepower
+weight
+acceleration
+year
+origin
+make$
+sample_weight

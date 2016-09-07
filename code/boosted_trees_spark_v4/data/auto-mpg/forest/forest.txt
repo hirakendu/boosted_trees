@@ -1,0 +1,112 @@
+m = 0
+  i = 1, y = 16.622, n = 299, x = cylinders, t = 5.5000
+    i = 2, y = 21.246, n = 128, x = weight, t = 2087.5
+      i = 4, y = 25.173, n = 39, x = year, t = 77.500
+        i = 8, y = 24.173, n = 30, x = make$, t = {chevrolet,fiat,ford,peugeot,plymouth,subaru,volkswagen,vw} : {datsun,dodge,honda,renault,toyota}
+          i = 16, y = 22.682, n = 17
+          i = 17, y = 26.123, n = 13
+        i = 9, y = 28.507, n = 9
+      i = 5, y = 19.525, n = 89, x = weight, t = 2305.0
+        i = 10, y = 20.946, n = 39
+        i = 11, y = 18.418, n = 50
+    i = 3, y = 13.161, n = 171, x = horsepower, t = 127.00
+      i = 6, y = 15.169, n = 74
+      i = 7, y = 11.629, n = 97, x = year, t = 76.500
+        i = 14, y = 11.058, n = 76
+        i = 15, y = 13.695, n = 21
+m = 1
+  i = 1, y = 3.3244, n = 299, x = weight, t = 2922.0
+    i = 2, y = 4.3475, n = 134, x = year, t = 73.500
+      i = 4, y = 3.4093, n = 54, x = make$, t = {amc,audi,chevrolet,ford,maxda,mazda,mercury,toyota,volkswagen,volvo} : {bmw,datsun,dodge,fiat,opel,peugeot,plymouth,renault,saab,toyouta}
+        i = 8, y = 2.4966, n = 32, x = make$, t = {maxda,mazda,volvo} : {amc,audi,chevrolet,ford,mercury,toyota,volkswagen}
+          i = 16, y = -0.47489, n = 3
+          i = 17, y = 2.8040, n = 29
+        i = 9, y = 4.7369, n = 22
+      i = 5, y = 4.9808, n = 80, x = make$, t = {audi,bmw,maxda,mazda,oldsmobile,opel,plymouth,pontiac,saab,vw} : {amc,buick,capri,chevrolet,datsun,dodge,fiat,ford,honda,renault,subaru,toyota,volkswagen}
+        i = 10, y = 3.7573, n = 18
+        i = 11, y = 5.3360, n = 62, x = year, t = 76.500
+          i = 22, y = 4.7773, n = 34
+          i = 23, y = 6.0146, n = 28
+    i = 3, y = 2.4935, n = 165, x = year, t = 77.500
+      i = 6, y = 2.2214, n = 133, x = make$, t = {chevroelt,chevy,chrysler,hi,mercedes-benz,mercury,oldsmobile,volvo} : {amc,buick,cadillac,chevrolet,dodge,ford,peugeot,plymouth,pontiac,toyota}
+        i = 12, y = 0.72013, n = 19
+        i = 13, y = 2.4716, n = 114, x = weight, t = 3709.0
+          i = 26, y = 2.9304, n = 50
+          i = 27, y = 2.1132, n = 64
+      i = 7, y = 3.6246, n = 32
+m = 2
+  i = 1, y = 0.66488, n = 299, x = make$, t = {amc,bmw,buick,chevroelt,chevrolet,chevy,ford,hi,maxda,mazda,mercedes-benz,mercury,oldsmobile,opel,peugeot,toyouta,volvo} : {audi,cadillac,capri,chrysler,datsun,dodge,fiat,honda,mercedes,plymouth,pontiac,renault,saab,subaru,toyota,volkswagen,vw}
+    i = 2, y = 0.40854, n = 160, x = acceleration, t = 17.650
+      i = 4, y = 0.55417, n = 134, x = horsepower, t = 85.500
+        i = 8, y = 1.5545, n = 19, x = make$, t = {opel} : {amc,buick,chevrolet,ford,maxda,mercury,oldsmobile}
+          i = 16, y = -0.023586, n = 3
+          i = 17, y = 1.8504, n = 16
+        i = 9, y = 0.38891, n = 115, x = weight, t = 4357.0
+          i = 18, y = 0.52180, n = 97
+          i = 19, y = -0.32724, n = 18
+      i = 5, y = -0.34204, n = 26, x = year, t = 76.500
+        i = 10, y = -0.69139, n = 20, x = displacement, t = 85.500
+          i = 20, y = 1.6484, n = 2
+          i = 21, y = -0.95137, n = 18
+        i = 11, y = 0.82248, n = 6
+    i = 3, y = 0.95996, n = 139, x = make$, t = {audi,capri,chrysler,datsun,dodge,fiat,honda,plymouth,pontiac,renault,saab,subaru,toyota,volkswagen,vw} : {cadillac,mercedes}
+      i = 6, y = 0.91705, n = 136, x = acceleration, t = 21.250
+        i = 12, y = 0.88400, n = 134, x = weight, t = 1829.5
+          i = 24, y = 1.7993, n = 8
+          i = 25, y = 0.82588, n = 126
+        i = 13, y = 3.1317, n = 2, x = displacement, t = 90.500
+          i = 26, y = 6.8630, n = 1
+          i = 27, y = -0.59968, n = 1
+      i = 7, y = 2.9050, n = 3
+m = 3
+  i = 1, y = 0.13298, n = 299, x = make$, t = {bmw,chevy,ford,hi,maxda,mazda,toyota,toyouta,volkswagen,volvo} : {amc,audi,buick,cadillac,capri,chevroelt,chevrolet,chrysler,datsun,dodge,fiat,honda,mercedes,mercedes-benz,mercury,oldsmobile,opel,peugeot,plymouth,pontiac,renault,saab,subaru,vw}
+    i = 2, y = -0.14757, n = 87, x = displacement, t = 89.500
+      i = 4, y = -0.89915, n = 10, x = make$, t = {volkswagen} : {maxda,mazda,toyota}
+        i = 8, y = -2.4530, n = 2
+        i = 9, y = -0.51068, n = 8
+      i = 5, y = -0.049962, n = 77, x = weight, t = 2196.0
+        i = 10, y = 0.70439, n = 13, x = weight, t = 2048.5
+          i = 20, y = 0.21382, n = 9
+          i = 21, y = 1.8082, n = 4
+        i = 11, y = -0.20319, n = 64, x = weight, t = 2320.0
+          i = 22, y = -1.1517, n = 9
+          i = 23, y = -0.047970, n = 55
+    i = 3, y = 0.24811, n = 212, x = horsepower, t = 95.500
+      i = 6, y = 0.51970, n = 83, x = acceleration, t = 20.300
+        i = 12, y = 0.59362, n = 78, x = acceleration, t = 14.050
+          i = 24, y = -0.52189, n = 5
+          i = 25, y = 0.67002, n = 73
+        i = 13, y = -0.63341, n = 5
+      i = 7, y = 0.073360, n = 129, x = acceleration, t = 15.450
+        i = 14, y = 0.26079, n = 91, x = weight, t = 3572.0
+          i = 28, y = 0.75375, n = 26
+          i = 29, y = 0.063602, n = 65
+        i = 15, y = -0.37548, n = 38, x = make$, t = {amc,audi,chevrolet,peugeot,plymouth,pontiac,saab} : {buick,cadillac,chevroelt,datsun,dodge,mercedes-benz,oldsmobile}
+          i = 30, y = -0.80039, n = 26
+          i = 31, y = 0.54516, n = 12
+m = 4
+  i = 1, y = 0.026595, n = 299, x = make$, t = {chevy,datsun,dodge,hi,honda,maxda,mercedes,mercedes-benz,oldsmobile,toyouta} : {amc,audi,bmw,buick,cadillac,capri,chevroelt,chevrolet,chrysler,fiat,ford,mazda,mercury,opel,peugeot,plymouth,pontiac,renault,saab,subaru,toyota,volkswagen,volvo,vw}
+    i = 2, y = -0.29397, n = 56, x = horsepower, t = 185.00
+      i = 4, y = -0.21639, n = 53, x = horsepower, t = 75.500
+        i = 8, y = 0.21332, n = 14, x = weight, t = 2045.5
+          i = 16, y = -0.31351, n = 10
+          i = 17, y = 1.5304, n = 4
+        i = 9, y = -0.37065, n = 39, x = weight, t = 2861.5
+          i = 18, y = -0.69518, n = 17
+          i = 19, y = -0.11987, n = 22
+      i = 5, y = -1.6646, n = 3
+    i = 3, y = 0.10047, n = 243, x = year, t = 70.500
+      i = 6, y = 0.55228, n = 24, x = horsepower, t = 199.00
+        i = 12, y = 0.86340, n = 19, x = make$, t = {amc,bmw,buick,peugeot,plymouth,saab,volkswagen} : {audi,chevrolet,ford,toyota}
+          i = 24, y = 0.54166, n = 12
+          i = 25, y = 1.4149, n = 7
+        i = 13, y = -0.62997, n = 5, x = make$, t = {buick,ford} : {chevrolet,plymouth,pontiac}
+          i = 26, y = -1.6239, n = 2
+          i = 27, y = 0.032644, n = 3
+      i = 7, y = 0.050958, n = 219, x = year, t = 77.500
+        i = 14, y = 0.11111, n = 180, x = year, t = 74.500
+          i = 28, y = -0.025678, n = 104
+          i = 29, y = 0.29830, n = 76
+        i = 15, y = -0.22668, n = 39, x = make$, t = {amc,audi,ford,peugeot,saab,toyota,volvo,vw} : {buick,cadillac,chevrolet,chrysler,mazda,mercury,plymouth,pontiac,volkswagen}
+          i = 30, y = -0.70057, n = 18
+          i = 31, y = 0.17951, n = 21

@@ -1,0 +1,1043 @@
+{
+  "numTrees": 5,
+  "trees": [
+    {
+      "nodes": [
+        {
+          "id": 1,
+          "response": 16.622,
+          "isLeaf": false,
+          "featureId": 0,
+          "featureType": 0,
+          "feature": "cylinders",
+          "threshold": 5.5000
+        },
+        {
+          "id": 2,
+          "response": 21.246,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2087.5
+        },
+        {
+          "id": 4,
+          "response": 25.173,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 77.500
+        },
+        {
+          "id": 8,
+          "response": 24.173,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            3,
+            6,
+            10,
+            14,
+            19,
+            30,
+            33
+          ],
+          "leftBranchValues": [
+            "chevrolet",
+            "fiat",
+            "ford",
+            "peugeot",
+            "plymouth",
+            "subaru",
+            "volkswagen",
+            "vw"
+          ]
+        },
+        {
+          "id": 16,
+          "response": 22.682,
+          "isLeaf": true
+        },
+        {
+          "id": 17,
+          "response": 26.123,
+          "isLeaf": true
+        },
+        {
+          "id": 9,
+          "response": 28.507,
+          "isLeaf": true
+        },
+        {
+          "id": 5,
+          "response": 19.525,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2305.0
+        },
+        {
+          "id": 10,
+          "response": 20.946,
+          "isLeaf": true
+        },
+        {
+          "id": 11,
+          "response": 18.418,
+          "isLeaf": true
+        },
+        {
+          "id": 3,
+          "response": 13.161,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 127.00
+        },
+        {
+          "id": 6,
+          "response": 15.169,
+          "isLeaf": true
+        },
+        {
+          "id": 7,
+          "response": 11.629,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 76.500
+        },
+        {
+          "id": 14,
+          "response": 11.058,
+          "isLeaf": true
+        },
+        {
+          "id": 15,
+          "response": 13.695,
+          "isLeaf": true
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "id": 1,
+          "response": 3.3244,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2922.0
+        },
+        {
+          "id": 2,
+          "response": 4.3475,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 73.500
+        },
+        {
+          "id": 4,
+          "response": 3.4093,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            6,
+            10,
+            11,
+            12,
+            15,
+            17,
+            18,
+            20,
+            28
+          ],
+          "leftBranchValues": [
+            "amc",
+            "audi",
+            "chevrolet",
+            "ford",
+            "maxda",
+            "mazda",
+            "mercury",
+            "toyota",
+            "volkswagen",
+            "volvo"
+          ]
+        },
+        {
+          "id": 8,
+          "response": 2.4966,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            15,
+            20,
+            28
+          ],
+          "leftBranchValues": [
+            "maxda",
+            "mazda",
+            "volvo"
+          ]
+        },
+        {
+          "id": 16,
+          "response": -0.47489,
+          "isLeaf": true
+        },
+        {
+          "id": 17,
+          "response": 2.8040,
+          "isLeaf": true
+        },
+        {
+          "id": 9,
+          "response": 4.7369,
+          "isLeaf": true
+        },
+        {
+          "id": 5,
+          "response": 4.9808,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            3,
+            11,
+            13,
+            15,
+            16,
+            19,
+            21,
+            27,
+            28,
+            32
+          ],
+          "leftBranchValues": [
+            "audi",
+            "bmw",
+            "maxda",
+            "mazda",
+            "oldsmobile",
+            "opel",
+            "plymouth",
+            "pontiac",
+            "saab",
+            "vw"
+          ]
+        },
+        {
+          "id": 10,
+          "response": 3.7573,
+          "isLeaf": true
+        },
+        {
+          "id": 11,
+          "response": 5.3360,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 76.500
+        },
+        {
+          "id": 22,
+          "response": 4.7773,
+          "isLeaf": true
+        },
+        {
+          "id": 23,
+          "response": 6.0146,
+          "isLeaf": true
+        },
+        {
+          "id": 3,
+          "response": 2.4935,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 77.500
+        },
+        {
+          "id": 6,
+          "response": 2.2214,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            1,
+            7,
+            17,
+            20,
+            21,
+            23,
+            25,
+            26
+          ],
+          "leftBranchValues": [
+            "chevroelt",
+            "chevy",
+            "chrysler",
+            "hi",
+            "mercedes-benz",
+            "mercury",
+            "oldsmobile",
+            "volvo"
+          ]
+        },
+        {
+          "id": 12,
+          "response": 0.72013,
+          "isLeaf": true
+        },
+        {
+          "id": 13,
+          "response": 2.4716,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 3709.0
+        },
+        {
+          "id": 26,
+          "response": 2.9304,
+          "isLeaf": true
+        },
+        {
+          "id": 27,
+          "response": 2.1132,
+          "isLeaf": true
+        },
+        {
+          "id": 7,
+          "response": 3.6246,
+          "isLeaf": true
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "id": 1,
+          "response": 0.66488,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            2,
+            6,
+            7,
+            12,
+            13,
+            15,
+            17,
+            20,
+            21,
+            23,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30
+          ],
+          "leftBranchValues": [
+            "amc",
+            "bmw",
+            "buick",
+            "chevroelt",
+            "chevrolet",
+            "chevy",
+            "ford",
+            "hi",
+            "maxda",
+            "mazda",
+            "mercedes-benz",
+            "mercury",
+            "oldsmobile",
+            "opel",
+            "peugeot",
+            "toyouta",
+            "volvo"
+          ]
+        },
+        {
+          "id": 2,
+          "response": 0.40854,
+          "isLeaf": false,
+          "featureId": 4,
+          "featureType": 0,
+          "feature": "acceleration",
+          "threshold": 17.650
+        },
+        {
+          "id": 4,
+          "response": 0.55417,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 85.500
+        },
+        {
+          "id": 8,
+          "response": 1.5545,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            13
+          ],
+          "leftBranchValues": [
+            "opel"
+          ]
+        },
+        {
+          "id": 16,
+          "response": -0.023586,
+          "isLeaf": true
+        },
+        {
+          "id": 17,
+          "response": 1.8504,
+          "isLeaf": true
+        },
+        {
+          "id": 9,
+          "response": 0.38891,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 4357.0
+        },
+        {
+          "id": 18,
+          "response": 0.52180,
+          "isLeaf": true
+        },
+        {
+          "id": 19,
+          "response": -0.32724,
+          "isLeaf": true
+        },
+        {
+          "id": 5,
+          "response": -0.34204,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 76.500
+        },
+        {
+          "id": 10,
+          "response": -0.69139,
+          "isLeaf": false,
+          "featureId": 1,
+          "featureType": 0,
+          "feature": "displacement",
+          "threshold": 85.500
+        },
+        {
+          "id": 20,
+          "response": 1.6484,
+          "isLeaf": true
+        },
+        {
+          "id": 21,
+          "response": -0.95137,
+          "isLeaf": true
+        },
+        {
+          "id": 11,
+          "response": 0.82248,
+          "isLeaf": true
+        },
+        {
+          "id": 3,
+          "response": 0.95996,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            1,
+            3,
+            4,
+            5,
+            9,
+            10,
+            11,
+            14,
+            16,
+            18,
+            19,
+            24,
+            31,
+            32,
+            33
+          ],
+          "leftBranchValues": [
+            "audi",
+            "capri",
+            "chrysler",
+            "datsun",
+            "dodge",
+            "fiat",
+            "honda",
+            "plymouth",
+            "pontiac",
+            "renault",
+            "saab",
+            "subaru",
+            "toyota",
+            "volkswagen",
+            "vw"
+          ]
+        },
+        {
+          "id": 6,
+          "response": 0.91705,
+          "isLeaf": false,
+          "featureId": 4,
+          "featureType": 0,
+          "feature": "acceleration",
+          "threshold": 21.250
+        },
+        {
+          "id": 12,
+          "response": 0.88400,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 1829.5
+        },
+        {
+          "id": 24,
+          "response": 1.7993,
+          "isLeaf": true
+        },
+        {
+          "id": 25,
+          "response": 0.82588,
+          "isLeaf": true
+        },
+        {
+          "id": 13,
+          "response": 3.1317,
+          "isLeaf": false,
+          "featureId": 1,
+          "featureType": 0,
+          "feature": "displacement",
+          "threshold": 90.500
+        },
+        {
+          "id": 26,
+          "response": 6.8630,
+          "isLeaf": true
+        },
+        {
+          "id": 27,
+          "response": -0.59968,
+          "isLeaf": true
+        },
+        {
+          "id": 7,
+          "response": 2.9050,
+          "isLeaf": true
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "id": 1,
+          "response": 0.13298,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            2,
+            10,
+            15,
+            18,
+            20,
+            25,
+            26,
+            27,
+            28
+          ],
+          "leftBranchValues": [
+            "bmw",
+            "chevy",
+            "ford",
+            "hi",
+            "maxda",
+            "mazda",
+            "toyota",
+            "toyouta",
+            "volkswagen",
+            "volvo"
+          ]
+        },
+        {
+          "id": 2,
+          "response": -0.14757,
+          "isLeaf": false,
+          "featureId": 1,
+          "featureType": 0,
+          "feature": "displacement",
+          "threshold": 89.500
+        },
+        {
+          "id": 4,
+          "response": -0.89915,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            10
+          ],
+          "leftBranchValues": [
+            "volkswagen"
+          ]
+        },
+        {
+          "id": 8,
+          "response": -2.4530,
+          "isLeaf": true
+        },
+        {
+          "id": 9,
+          "response": -0.51068,
+          "isLeaf": true
+        },
+        {
+          "id": 5,
+          "response": -0.049962,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2196.0
+        },
+        {
+          "id": 10,
+          "response": 0.70439,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2048.5
+        },
+        {
+          "id": 20,
+          "response": 0.21382,
+          "isLeaf": true
+        },
+        {
+          "id": 21,
+          "response": 1.8082,
+          "isLeaf": true
+        },
+        {
+          "id": 11,
+          "response": -0.20319,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2320.0
+        },
+        {
+          "id": 22,
+          "response": -1.1517,
+          "isLeaf": true
+        },
+        {
+          "id": 23,
+          "response": -0.047970,
+          "isLeaf": true
+        },
+        {
+          "id": 3,
+          "response": 0.24811,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 95.500
+        },
+        {
+          "id": 6,
+          "response": 0.51970,
+          "isLeaf": false,
+          "featureId": 4,
+          "featureType": 0,
+          "feature": "acceleration",
+          "threshold": 20.300
+        },
+        {
+          "id": 12,
+          "response": 0.59362,
+          "isLeaf": false,
+          "featureId": 4,
+          "featureType": 0,
+          "feature": "acceleration",
+          "threshold": 14.050
+        },
+        {
+          "id": 24,
+          "response": -0.52189,
+          "isLeaf": true
+        },
+        {
+          "id": 25,
+          "response": 0.67002,
+          "isLeaf": true
+        },
+        {
+          "id": 13,
+          "response": -0.63341,
+          "isLeaf": true
+        },
+        {
+          "id": 7,
+          "response": 0.073360,
+          "isLeaf": false,
+          "featureId": 4,
+          "featureType": 0,
+          "feature": "acceleration",
+          "threshold": 15.450
+        },
+        {
+          "id": 14,
+          "response": 0.26079,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 3572.0
+        },
+        {
+          "id": 28,
+          "response": 0.75375,
+          "isLeaf": true
+        },
+        {
+          "id": 29,
+          "response": 0.063602,
+          "isLeaf": true
+        },
+        {
+          "id": 15,
+          "response": -0.37548,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            6,
+            11,
+            12,
+            16,
+            19,
+            30,
+            32
+          ],
+          "leftBranchValues": [
+            "amc",
+            "audi",
+            "chevrolet",
+            "peugeot",
+            "plymouth",
+            "pontiac",
+            "saab"
+          ]
+        },
+        {
+          "id": 30,
+          "response": -0.80039,
+          "isLeaf": true
+        },
+        {
+          "id": 31,
+          "response": 0.54516,
+          "isLeaf": true
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "id": 1,
+          "response": 0.026595,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            2,
+            4,
+            5,
+            8,
+            9,
+            15,
+            21,
+            23,
+            25,
+            26
+          ],
+          "leftBranchValues": [
+            "chevy",
+            "datsun",
+            "dodge",
+            "hi",
+            "honda",
+            "maxda",
+            "mercedes",
+            "mercedes-benz",
+            "oldsmobile",
+            "toyouta"
+          ]
+        },
+        {
+          "id": 2,
+          "response": -0.29397,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 185.00
+        },
+        {
+          "id": 4,
+          "response": -0.21639,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 75.500
+        },
+        {
+          "id": 8,
+          "response": 0.21332,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2045.5
+        },
+        {
+          "id": 16,
+          "response": -0.31351,
+          "isLeaf": true
+        },
+        {
+          "id": 17,
+          "response": 1.5304,
+          "isLeaf": true
+        },
+        {
+          "id": 9,
+          "response": -0.37065,
+          "isLeaf": false,
+          "featureId": 3,
+          "featureType": 0,
+          "feature": "weight",
+          "threshold": 2861.5
+        },
+        {
+          "id": 18,
+          "response": -0.69518,
+          "isLeaf": true
+        },
+        {
+          "id": 19,
+          "response": -0.11987,
+          "isLeaf": true
+        },
+        {
+          "id": 5,
+          "response": -1.6646,
+          "isLeaf": true
+        },
+        {
+          "id": 3,
+          "response": 0.10047,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 70.500
+        },
+        {
+          "id": 6,
+          "response": 0.55228,
+          "isLeaf": false,
+          "featureId": 2,
+          "featureType": 0,
+          "feature": "horsepower",
+          "threshold": 199.00
+        },
+        {
+          "id": 12,
+          "response": 0.86340,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            10,
+            12,
+            16,
+            19,
+            27,
+            29,
+            30
+          ],
+          "leftBranchValues": [
+            "amc",
+            "bmw",
+            "buick",
+            "peugeot",
+            "plymouth",
+            "saab",
+            "volkswagen"
+          ]
+        },
+        {
+          "id": 24,
+          "response": 0.54166,
+          "isLeaf": true
+        },
+        {
+          "id": 25,
+          "response": 1.4149,
+          "isLeaf": true
+        },
+        {
+          "id": 13,
+          "response": -0.62997,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            29
+          ],
+          "leftBranchValues": [
+            "buick",
+            "ford"
+          ]
+        },
+        {
+          "id": 26,
+          "response": -1.6239,
+          "isLeaf": true
+        },
+        {
+          "id": 27,
+          "response": 0.032644,
+          "isLeaf": true
+        },
+        {
+          "id": 7,
+          "response": 0.050958,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 77.500
+        },
+        {
+          "id": 14,
+          "response": 0.11111,
+          "isLeaf": false,
+          "featureId": 5,
+          "featureType": 0,
+          "feature": "year",
+          "threshold": 74.500
+        },
+        {
+          "id": 28,
+          "response": -0.025678,
+          "isLeaf": true
+        },
+        {
+          "id": 29,
+          "response": 0.29830,
+          "isLeaf": true
+        },
+        {
+          "id": 15,
+          "response": -0.22668,
+          "isLeaf": false,
+          "featureId": 7,
+          "featureType": 1,
+          "feature": "make$",
+          "leftBranchValueIds": [
+            0,
+            3,
+            11,
+            12,
+            16,
+            18,
+            20,
+            30
+          ],
+          "leftBranchValues": [
+            "amc",
+            "audi",
+            "ford",
+            "peugeot",
+            "saab",
+            "toyota",
+            "volvo",
+            "vw"
+          ]
+        },
+        {
+          "id": 30,
+          "response": -0.70057,
+          "isLeaf": true
+        },
+        {
+          "id": 31,
+          "response": 0.17951,
+          "isLeaf": true
+        }
+      ]
+    }
+  ]
+}

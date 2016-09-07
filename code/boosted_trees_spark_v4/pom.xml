@@ -1,0 +1,131 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>yahoo</groupId>
+	<artifactId>boosted_trees_spark</artifactId>
+	<version>4</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<spark.version>1.1.0</spark.version>
+		<scala.binary.version>2.10</scala.binary.version>
+		<scala.version>2.10.4</scala.version>
+	</properties>
+
+	<dependencies>
+		<!-- Explicitly specify transitive dependencies for required packages, 
+			since they are disabled in some descriptors. Should be skipped
+			for system provided libraries. -->
+		<!-- 1. Scala library (system). -->
+		<dependency>
+			<groupId>org.scala-lang</groupId>
+			<artifactId>scala-library</artifactId>
+			<version>${scala.version}</version>
+		</dependency>
+		<!-- 2. Spark/Yarn related dependencies (system), taken from spark-examples POM. -->
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+		</dependency>
+		<!--  3. Gson. -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>scala-maven-plugin</artifactId>
+				<configuration>
+					<args>
+						<!-- <arg>-unchecked</arg> -->
+						<!-- <arg>-deprecation</arg>  -->
+						<!-- <arg>-explaintypes</arg> -->
+						<!-- <arg>-optimize</arg> -->
+					</args>
+					<!--
+					<systemProperties>
+						<property>
+							<name>scalac.args</name>
+							<value>-Xdisable-assertions</value>
+						</property>
+					</systemProperties>
+					-->
+				</configuration>
+				<version>3.1.5</version>
+				<executions>
+					<execution>
+						<id>scala-compile-first</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>add-source</goal>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>scala-test-compile</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<fork>true</fork>
+					<source>1.6</source>
+					<target>1.6</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<appendAssemblyId>true</appendAssemblyId>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+						</manifest>
+					</archive>
+					<descriptors>
+						<!-- <descriptor>src/main/assembly/jar_with_dependencies.xml</descriptor> -->
+						<!-- This descriptor has transitive dependencies disabled. Have to 
+							explicitly specify all transitive dependencies. -->
+						<descriptor>src/main/assembly/spark.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

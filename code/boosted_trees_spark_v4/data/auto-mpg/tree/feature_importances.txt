@@ -1,0 +1,8 @@
+cylinders	100.00
+weight	21.00
+horsepower	10.99
+year	5.11
+make$	1.82
+displacement	0.00
+acceleration	0.00
+origin	0.00
